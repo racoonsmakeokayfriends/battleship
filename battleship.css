@@ -1,0 +1,179 @@
+*, *:after, *:before {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
+}
+
+/* =========================================================
+   Declare colors, fonts
+   ========================================================= */
+/* body */
+/* grid */
+/* modals */
+body {
+  background-color: #373633;
+  font-family: "Lato", Calibri, Arial, sans-serif;
+  color: #ffffff;
+  text-align: center;
+}
+
+.container {
+  width: 275px;
+  height: 275px;
+  margin: 200px auto;
+  position: relative;
+}
+
+/**********************************
+ *           GRID STUFF           *
+ **********************************/
+.grid {
+  background: none;
+  border: none;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+  width: 200px;
+  position: absolute;
+  left: 75px;
+  top: 75px;
+}
+
+.grid:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+.grid .square {
+  background-color: #ff0000;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  float: left;
+  padding: 5px;
+  width: 20%;
+  height: 40px;
+}
+
+.grid .square.fill {
+  background-color: #000;
+}
+
+.grid .square.mistake {
+  background-color: #ddd;
+  color: #ff0000;
+}
+
+.grid .square.X {
+  background-color: #ffffff;
+  color: #000000;
+}
+
+.grid .square.mistake::after,
+.grid .square.X::after {
+  content: 'X';
+}
+
+button.X::after {
+  content: 'X';
+}
+
+button.fill::after {
+  content: '/';
+}
+
+/***********************************
+ *           MODAL STUFF           *
+ ***********************************/
+.md {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.9);
+  z-index: 100;
+}
+
+.md-content {
+  background-color: #63997A;
+  color: #ffffff;
+  position: relative;
+  width: 500px;
+  margin: 100px auto;
+  padding: 20px;
+}
+
+/*------------
+    Variants  
+  ------------*/
+.md-hd {
+  margin-bottom: 10px;
+  padding: 0.4em;
+  text-align: center;
+  font-size: 1.2em;
+  font-weight: 600;
+  letter-spacing: 1px;
+  background-color: #40805C;
+}
+
+.md-ft {
+  /* TODO */
+}
+
+/**********************************
+ *           HINTS STUFF          *
+ **********************************/
+.hints.horizontal {
+  height: 200px;
+  width: 75px;
+  background-color: pink;
+  position: absolute;
+  top: 75px;
+}
+
+.hints.horizontal .row {
+  background-color: yellow;
+  height: 40px;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+}
+
+.hints.horizontal .row .number {
+  color: blue;
+  display: inline;
+}
+
+.hints.vertical {
+  height: 75px;
+  width: 200px;
+  background-color: green;
+  position: absolute;
+  left: 75px;
+}
+
+.hints.vertical .col {
+  display: inline-block;
+  width: 40px;
+  height: 100%;
+  background-color: blue;
+  float: left;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+}
+
+/**********************************
+ *           MISC STUFF           *
+ **********************************/
+.left {
+  float: left;
+}
+
+.right {
+  float: right;
+}
+
+.hidden {
+  display: none;
+}
+
+.circular {
+  border-radius: 100%;
+}
