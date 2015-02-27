@@ -42,11 +42,11 @@ $(document).ready(function() {
 
   //// Stores the state of a battleship board and handles drawing it.
   Battleship.Board = function (canvas, player_ref) {
-    console.log('=========== Making Board Start ===========');
     this.context = canvas.getContext('2d');
     this.player_ref = player_ref;
     this.snapshot = null;
     this.is_my_board = false;
+    this.create_random_board();
 
     // Listen for changes to our board.
     var self = this;
@@ -54,7 +54,6 @@ $(document).ready(function() {
       self.snapshot = snapshot;
       self.draw();
     });
-    console.log('=========== Making Board Done0 ===========');
   };
 
 
@@ -69,23 +68,26 @@ $(document).ready(function() {
     for (var x = 0; x < Battleship.BOARD_WIDTH; x++) {
       for (var y = 0; y < Battleship.BOARD_HEIGHT; y++) {
         square_state = this.get_square_state(x,y);
-        console.log('imhere!');
-        left = x * Battleship.BLOCK_SIZE_PIXELS;
-        top = y * Battleship.BLOCK_SIZE_PIXELS;
+        left = x * Battleship.SQUARE_SIZE_PIXELS;
+        top = y * Battleship.SQUARE_SIZE_PIXELS;
         this.context.lineWidth = 1;
         this.context.strokeStyle = Battleship.BLOCK_BORDER_COLOR;
         if (square_state == Battleship.HIT) {
           this.context.fillStyle = 'red';
         }
         else if (square_state == Battleship.EMPTY) {
-
+          this.context.fillStyle = 'blue';
+          console.log(square_state)
         }
         else if (square_state == Battleship.BOAT) {
-
+          this.context.fillStyle = 'yellow';
+        }
+        else {          
+          this.context.fillStyle = 'green';
         }
 
-        this.context.fillRect(left, top, Battleship.BLOCK_SIZE_PIXELS, Battleship.BLOCK_SIZE_PIXELS);
-        this.context.strokeRect(left, top, Battleship.BLOCK_SIZE_PIXELS, Battleship.BLOCK_SIZE_PIXELS);
+        this.context.fillRect(left, top, Battleship.SQUARE_SIZE_PIXELS, Battleship.SQUARE_SIZE_PIXELS);
+        this.context.strokeRect(left, top, Battleship.SQUARE_SIZE_PIXELS, Battleship.SQUARE_SIZE_PIXELS);
       }
     }
 
@@ -128,7 +130,7 @@ $(document).ready(function() {
   //// Create random board 
   Battleship.Board.prototype.create_random_board = function () {
     var x,y;
-    for (var i = 0; i < this.SHIPS.length; i++) {
+    for (var i = 0; i < Battleship.SHIPS.length; i++) {
       while (false) {
         if (Math.random() < 0.500000) { // horizontal
           x = Math.floor(Math.random()*(this.BOARD_WIDTH-this.SHIPS[i].size));
@@ -161,8 +163,8 @@ $(document).ready(function() {
   }
 
   Battleship.Board.prototype.get_square_state = function (row,col) {
-    console.log(this.player_ref.child('board').child(row).child(col).val())
-    return this.player_ref.child('board').child(row).child(col).val();
+    var square_contents = this.snapshot === null ? null : this.snapshot.child('board/'+row+'/'+col).val();
+    return square_contents || Battleship.EMPTY;
   }
 
 
