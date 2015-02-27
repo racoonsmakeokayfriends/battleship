@@ -2,217 +2,445 @@ $(document).ready(function() {
 /* =========================================================
                 CONFIG, CONSTANTS, + GLOBALS
    ========================================================= */
-  var BOARD_WIDTH = 5;
-  var BOARD_HEIGHT = 5;
-
-  var ROUND = {
-    picture: [],
-    horizontal_hints: [],
-    vertical_hints: []
-  }
 
 /* =========================================================
                       LOGIC FUNCTIONS
    ========================================================= */
 
-
-  function make_random_board() {
-    var pic = [];
-    for (var i = 0; i < BOARD_WIDTH; i++) {
-      pic.push([]);
-      for (var j = 0; j < BOARD_HEIGHT; j++) {
-        pic[i].push(Math.floor(Math.random()*2));
-      };
-    };
-    return pic;
-  }
-
-  function generate_game(round) {
-    round.picture = make_random_board();
-
-    var streak;
-    // create the horizontal hints
-    round.horizontal_hints = [];
-    for (var i = 0; i < BOARD_HEIGHT; i++) {
-      round.horizontal_hints.push([]);
-      streak = 0;
-      for (var j = 0; j < BOARD_WIDTH; j++) {
-        if (round.picture[i][j] == 1) {
-          streak += 1;
-        }
-        else {
-          if (streak != 0) {
-            round.horizontal_hints[i].push(streak);
-          }
-          streak = 0;
-        }
-      };
-      if (streak != 0) {
-        round.horizontal_hints[i].push(streak);
-      }
-      if (round.horizontal_hints[i].length == 0) {
-        round.horizontal_hints[i].push(0);
-      }
-    };
-
-    // create the vertical hints
-    round.vertical_hints = [];
-    for (var i = 0; i < BOARD_WIDTH; i++) {
-      round.vertical_hints.push([]);
-      streak = 0;
-      for (var j = 0; j < BOARD_HEIGHT; j++) {
-        if (round.picture[j][i] == 1) {
-          streak += 1;
-        }
-        else {
-          if (streak != 0) {
-            round.vertical_hints[i].push(streak);
-          }
-          streak = 0;
-        }
-      };
-      if (streak != 0) {
-        round.vertical_hints[i].push(streak);
-      }
-      if (round.vertical_hints[i].length == 0) {
-        round.vertical_hints[i].push(0);
-      }
-    };
-
-    return round;
-  }
-
-  function has_won(round) {
-    var $sq;
-    for (var i=0;i<BOARD_HEIGHT;i++) {
-      for (var j=0;j<BOARD_WIDTH;j++) {
-        if (round.picture[i][j] == 1) {
-          $sq = $('#game .grid .square[row="'+i.toString()+'"][col="'+j.toString()+'"]');
-          if (!$sq.hasClass('fill')) {
-            return false;
-          }
-        }        
-      }
-    }
-    return true;
-  }
-
-
 /* =========================================================
                         DOM FUNCTIONS
    ========================================================= */
 
-  function make_vert_hints_html(hints) {
-    var html = '<div class="col">';
-    for (var i = 0; i < hints.length; i++) {
-      html += '<div class="number">' + hints[i].toString() + '</div>';
-    };
-    html += '</div>'
-    return html;
-  }
-
-  function make_hor_hints_html(hints) {
-    var html = '<div class="row">';
-    for (var i = 0; i < hints.length; i++) {
-      html += '<div class="number">' + hints[i].toString() + '</div>';
-    };
-    html += '</div>'
-    return html;
-  }
-
-  function make_square_html(row,col) {
-    var html = '<div class="square"'
-    html += 'row="' + row.toString() + '" col="' + col.toString() + '"'
-    html += '></div>';
-    return html;
-  }
-
-  function populate_game(round) {
-    // populate the vertical hints
-    for (var i = 0; i < BOARD_WIDTH; i++) {
-      $('#game .hints.vertical').append(make_vert_hints_html(round.vertical_hints[i]));      
-    };
-
-    // populate the horizontal hints
-    for (var i = 0; i < BOARD_HEIGHT; i++) {
-      $('#game .hints.horizontal').append(make_hor_hints_html(round.horizontal_hints[i]));      
-    };
-
-    // populate the grid
-    for (var i = 0; i < BOARD_HEIGHT; i++) {
-      for (var j = 0; j < BOARD_WIDTH; j++) {
-        $('#game .grid').append(make_square_html(i,j));
-      };    
-    };
-  }
-  
-  function game_won() {
-    alert('you won!');
-  }
 /* =========================================================
                       USER INTERACTIONS
    ========================================================= */
 
-  $('#start_btn').click(function() {
-    init_game();
-    $(this).hide();
-    $('#toggle_click_btn').removeClass('hidden')
-  });
-
-  $('#toggle_click_btn').click(function() {
-   $(this).toggleClass('X');
-   $(this).toggleClass('fill'); 
-  })
-  
-  $(document).on('click','#game .square',function() {
-    if ($(this).hasClass('fill')) { return; }
-    
-    if ($('#toggle_click_btn').hasClass('X')) {
-      $(this).addClass('X');
-      return;
-    }
-    var r = Number($(this).attr('row'));
-    var c = Number($(this).attr('col'));
-    if (ROUND.picture[r][c] == 1) {
-      $(this).addClass('fill');
-      if (has_won(ROUND)) {
-        game_won();
-      }
-    }
-    else {
-      $(this).addClass('mistake');
-    }
-  });
-  
-  $(document).on('click','#game .square.X',function() {
-    $(this).removeClass('X');
-  });
 /* =========================================================
-                            MISC.
+                        BATTLESHIP
    ========================================================= */
 
-  function init_game() {
-    ROUND = generate_game(ROUND);
-    populate_game(ROUND);
-  }
+  var Battleship = {};
+  Battleship.BOARD_HEIGHT = 10;
+  Battleship.BOARD_WIDTH = 10;
+  Battleship.SQUARE_SIZE_PIXELS = 25;
+  Battleship.BOARD_HEIGHT_PIXELS = Battleship.BOARD_HEIGHT * Battleship.BLOCK_SIZE_PIXELS;
+  Battleship.BOARD_WIDTH_PIXELS = Battleship.BOARD_WIDTH * Battleship.BLOCK_SIZE_PIXELS;
+  Battleship.SHIPS = [
+    {name:'carrier',size:5},
+    {name:'battleship',size:4},
+    {name:'submarine',size:3},
+    {name:'destroyer',size:3},
+    {name:'patrol boat',size:2}
+  ];
 
-  function print_board(board) {
-    var s;
-    for (var i=0; i<board.length;i++) {
-      s = '';
-      for (var j = 0; j < board[i].length; j++) {
-        s += board[i][j] + '\t';
-      };
-      console.log(s);
+  Battleship.HIT = 'immahit!';
+  Battleship.EMPTY = 'nothinghere!';
+  Battleship.BOAT = 'deresaboathere!';
+  Battleship.UNKNOWN = 'idontknowwhatshere!';
+
+  Battleship.BLOCK_BORDER_COLOR = 'black';
+
+  //// Stores the state of a battleship board and handles drawing it.
+  Battleship.Board = function (canvas, player_ref) {
+    console.log('=========== Making Board Start ===========');
+    this.context = canvas.getContext('2d');
+    this.player_ref = player_ref;
+    this.snapshot = null;
+    this.is_my_board = false;
+
+    // Listen for changes to our board.
+    var self = this;
+    player_ref.on('value', function(snapshot) {
+      self.snapshot = snapshot;
+      self.draw();
+    });
+    console.log('=========== Making Board Done0 ===========');
+  };
+
+
+  //// Draws the contents of the board as well as the current piece.
+  Battleship.Board.prototype.draw = function () {
+    console.log('========= Draw Board start =========');
+    // Clear canvas.
+    this.context.clearRect(0, 0, Battleship.BOARD_WIDTH_PIXELS, Battleship.BOARD_HEIGHT_PIXELS);
+
+    // Iterate over columns / rows in board data and draw each non-empty block.
+    var square_state,left,top
+    for (var x = 0; x < Battleship.BOARD_WIDTH; x++) {
+      for (var y = 0; y < Battleship.BOARD_HEIGHT; y++) {
+        square_state = this.get_square_state(x,y);
+        console.log('imhere!');
+        left = x * Battleship.BLOCK_SIZE_PIXELS;
+        top = y * Battleship.BLOCK_SIZE_PIXELS;
+        this.context.lineWidth = 1;
+        this.context.strokeStyle = Battleship.BLOCK_BORDER_COLOR;
+        if (square_state == Battleship.HIT) {
+          this.context.fillStyle = 'red';
+        }
+        else if (square_state == Battleship.EMPTY) {
+
+        }
+        else if (square_state == Battleship.BOAT) {
+
+        }
+
+        this.context.fillRect(left, top, Battleship.BLOCK_SIZE_PIXELS, Battleship.BLOCK_SIZE_PIXELS);
+        this.context.strokeRect(left, top, Battleship.BLOCK_SIZE_PIXELS, Battleship.BLOCK_SIZE_PIXELS);
+      }
     }
-  }
 
-  function is_here(arr,ele) {
-    if (arr.length == 0) {return false;}
+    // If this isn't my board, dim it out with a 25% opacity black rectangle.
+    if (!this.is_my_board) {
+      this.context.fillStyle = "rgba(0, 0, 0, 0.25)";
+      this.context.fillRect(0, 0, Battleship.BOARD_WIDTH_PIXELS, Battleship.BOARD_HEIGHT_PIXELS);
+    }
+    console.log('========= Draw Board done0 =========');
+  };
 
-    for (var i = 0; i < arr.length; i++) {
-      if (ele == arr[i]) { return true; }
-    };
+  //// Clear the board contents.
+  Battleship.Board.prototype.clear = function () {
+    for (var i=0;i<this.BOARD_HEIGHT;i++) {
+      for (var j=0;j<this.BOARD_WIDTH;j++) {
+        this.set_square(i,j,this.EMPTY);
+      };
+    }
+  };
+
+  //// Check if this piece will collide with another piece if it is place here
+  Battleship.Board.prototype.check_for_collision = function (col,row,ship_size,horizontal) {
+    if (horizontal) {
+      for (var i = col; i < col+ship_size; i++) {
+        if (this.snapshot.child('board/' + row + '/' + i).val() != this.EMPTY) {
+          return true;
+        }
+      };
+    }
+    else {
+      for (var i = row; i < row+ship_size; i++) {        
+        if (this.snapshot.child('board/' + i + '/' + col).val() != this.EMPTY) {
+          return true;
+        }
+      };
+    }
     return false;
   }
+
+  //// Create random board 
+  Battleship.Board.prototype.create_random_board = function () {
+    var x,y;
+    for (var i = 0; i < this.SHIPS.length; i++) {
+      while (false) {
+        if (Math.random() < 0.500000) { // horizontal
+          x = Math.floor(Math.random()*(this.BOARD_WIDTH-this.SHIPS[i].size));
+          y = Math.floor(Math.random()*this.BOARD_HEIGHT);          
+        }
+        else { // vertical
+          x = Math.floor(Math.random()*this.BOARD_WIDTH);
+          y = Math.floor(Math.random()*(this.BOARD_HEIGHT-this.SHIPS[i].size));
+        }
+        if (!this.check_for_collision(this.SHIPS[i].size,x,y)) {
+          break;
+        }
+      }
+    };
+  }
+
+  Battleship.Board.prototype.set_ship = function (col,row,ship_size,horizontal) {
+    for (var i = 0; i < ship_size; i++) {
+      if (horizontal) {
+        this.player_ref.child('board').child(row+i).child(col).set(this.BOAT);
+      }
+      else {
+        this.player_ref.child('board').child(row).child(col+i).set(this.BOAT);        
+      }
+    };
+  }
+
+  Battleship.Board.prototype.set_square = function (row,col,square_contents) {
+    this.player_ref.child('board').child(row).child(col).set(square_contents);
+  }
+
+  Battleship.Board.prototype.get_square_state = function (row,col) {
+    console.log(this.player_ref.child('board').child(row).child(col).val())
+    return this.player_ref.child('board').child(row).child(col).val();
+  }
+
+
+/* =========================================================
+                        CONTROLLER
+   ========================================================= */
+
+  Battleship.PLAYING_STATE = { Watching: 0, Joining: 1, Playing: 2 };
+
+  Battleship.Controller = function (battleship_ref) {
+    console.log('=============== Controller Start ===============');
+    this.battleship_ref = battleship_ref;
+    this.create_boards();
+
+    this.playing_state = Battleship.PLAYING_STATE.Watching;
+    this.wait_to_join();
+    console.log('=============== Controller Done ===============');
+  };
+
+  Battleship.Controller.prototype.create_boards = function () {
+    console.log('============= Create Boards Start =============');
+    this.boards = [];
+    for(var i = 0; i <= 1; i++) {
+      var player_ref = this.battleship_ref.child('player' + i);
+      var canvas = $('#canvas' + i).get(0);
+      this.boards.push(new Battleship.Board(canvas, player_ref));
+    }
+    console.log('============= Create Boards End =============');
+  };
+
+
+  Battleship.Controller.prototype.wait_to_join = function() {
+    console.log('============= Wait To Join Start =============');
+    var self = this;
+
+    // Listen on 'online' location for player0 and player1.
+    this.battleship_ref.child('player0/online').on('value', function(online_snap) {
+      if (online_snap.val() === null && self.playing_state === Battleship.PLAYING_STATE.Watching) {
+        self.try_to_join(0);
+      }
+    });
+
+    this.battleship_ref.child('player1/online').on('value', function(online_snap) {
+      if (online_snap.val() === null && self.playing_state === Battleship.PLAYING_STATE.Watching) {
+        self.try_to_join(1);
+      }
+    });
+    console.log('============= Wait To Join End =============');
+  };
+
+  //// Try to join the game as the specified player_num.
+  Battleship.Controller.prototype.try_to_join = function(player_num) {
+    // Set ourselves as joining to make sure we don't try to join as both players. :-)
+    this.playing_state = Battleship.PLAYING_STATE.Joining;
+
+    // Use a transaction to make sure we don't conflict with other people trying to join.
+    var self = this;
+    this.battleship_ref.child('player' + player_num + '/online').transaction(function(online_val) {
+      if (online_val === null) {
+        return true; // Try to set online to true.
+      } else {
+        return; // Somebody must have beat us.  Abort the transaction.
+      }
+    }, function(error, committed) {
+      if (committed) { // We got in!
+        self.playing_state = Battleship.PLAYING_STATE.Playing;
+        self.start_playing(player_num);
+      } else {
+        self.playing_state = Battleship.PLAYING_STATE.Watching;
+      }
+    });
+  };
+
+
+  /**
+   * Once we've joined, enable controlling our player.
+   */
+  Battleship.Controller.prototype.start_playing = function (player_num) {
+    this.my_player_ref = this.battleship_ref.child('player' + player_num);
+    this.opponent_player_ref = this.battleship_ref.child('player' + (1 - player_num));
+    this.my_board = this.boards[player_num];
+    this.my_board.is_my_board = true;
+    this.my_board.draw();
+
+    // Clear my_player_ref 'online' status when we disconnect so somebody else can join.
+    this.my_player_ref.child('online').onDisconnect().remove();
+
+    // Detect when other player pushes rows to our board.
+    this.watch_for_extra_rows();
+
+    // Detect when game is restarted by other player.
+    this.watch_for_restart();
+
+    $('#game_in_progress').hide();
+
+    var self = this;
+    $('#restart_button').show();
+    $("#restart_button").click(function () {
+      self.restart_game();
+    });
+
+    this.initialize_piece();
+    this.enable_keyboard();
+    this.reset_gravity();
+  };
+
+  Battleship.Controller.prototype.initialize_piece = function() {
+    this.fallingPiece = null;
+    var pieceRef = this.myPlayerRef.child('piece');
+    var self = this;
+
+    // Watch for changes to the current piece (and initialize it if it's null).
+    pieceRef.on('value', function(snapshot) {
+      if (snapshot.val() === null) {
+        var newPiece = new Battleship.Piece();
+        newPiece.writeToFirebase(pieceRef);
+      } else {
+        self.fallingPiece = Battleship.Piece.fromSnapshot(snapshot);
+      }
+    });
+  };
+
+
+  //// Sets up handlers for all keyboard commands.   
+  Battleship.Controller.prototype.enable_keyboard = function () {
+    var self = this;
+    $(document).on('keydown', function (evt) {
+      if (self.fallingPiece === null)
+        return; // piece isn't initialized yet.
+
+      var keyCode = evt.which;
+      var key = { space:32, left:37, up:38, right:39, down:40 };
+
+      var newPiece = null;
+      switch (keyCode) {
+        case key.left:
+          newPiece = self.fallingPiece.moveLeft();
+          break;
+        case key.up:
+          newPiece = self.fallingPiece.rotate();
+          break;
+        case key.right:
+          newPiece = self.fallingPiece.moveRight();
+          break;
+        case key.down:
+          newPiece = self.fallingPiece.drop();
+          break;
+        case key.space:
+          // Drop as far as we can.
+          var droppedPiece = self.fallingPiece;
+          do {
+            newPiece = droppedPiece;
+            droppedPiece = droppedPiece.drop();
+          } while (!self.myBoard.checkForPieceCollision(droppedPiece));
+          break;
+      }
+
+      if (newPiece !== null) {
+        // If the new piece position / rotation is valid, update self.fallingPiece and firebase.
+        if (!self.myBoard.checkForPieceCollision(newPiece)) {
+          // If the keypress moved the piece down, reset gravity.
+          if (self.fallingPiece.y != newPiece.y) {
+            self.resetGravity();
+          }
+
+          newPiece.writeToFirebase(self.myPlayerRef.child('piece'));
+        }
+        return false; // handled
+      }
+
+      return true;
+    });
+  };
+
+
+  //// Sets a timer to make the piece repeatedly drop after GRAVITY_DELAY ms.
+  Battleship.Controller.prototype.reset_gravity = function () {
+    // If there's a timer already active, clear it first.
+    if (this.gravityIntervalId !== null) {
+      clearInterval(this.gravityIntervalId);
+    }
+
+    var self = this;
+    this.gravityIntervalId = setInterval(function() {
+      self.doGravity();
+    }, Battleship.GRAVITY_DELAY);
+  };
+
+
+  Battleship.Controller.prototype.doGravity = function () {
+    if (this.fallingPiece === null)
+      return; // piece isn't initialized yet.
+
+    var newPiece = this.fallingPiece.drop();
+
+    // If we've hit the bottom, add the (pre-drop) piece to the board and create a new piece.
+    if (this.myBoard.checkForPieceCollision(newPiece)) {
+      this.myBoard.addLandedPiece(this.fallingPiece);
+
+      // Check for completed lines and if appropriate, push extra rows to our opponent.
+      var completedRows = this.myBoard.removeCompletedRows();
+      var rowsToPush = (completedRows === 4) ? 4 : completedRows - 1;
+      if (rowsToPush > 0)
+        this.opponentPlayerRef.child('extrarows').push(rowsToPush);
+
+      // Create new piece (it'll be initialized to a random piece at the top of the screen).
+      newPiece = new Battleship.Piece();
+
+      // Is the board full?
+      if (this.myBoard.checkForPieceCollision(newPiece))
+        this.gameOver();
+    }
+
+    newPiece.writeToFirebase(this.myPlayerRef.child('piece'));
+  };
+
+
+  /**
+   * Detect when our opponent pushes extra rows to us.
+   */
+  Battleship.Controller.prototype.watch_for_extra_rows = function () {
+    var self = this;
+    var extraRowsRef = this.myPlayerRef.child('extrarows');
+    extraRowsRef.on('child_added', function(snapshot) {
+      var rows = snapshot.val();
+      extraRowsRef.child(snapshot.key()).remove();
+
+      var overflow = self.myBoard.addJunkRows(rows);
+      if (overflow)
+        self.gameOver();
+
+      // Also move piece up to avoid collisions.
+      if (self.fallingPiece) {
+        self.fallingPiece.y -= rows;
+        self.fallingPiece.writeToFirebase(self.myPlayerRef.child('piece'));
+      }
+    });
+  };
+
+
+  //// Detect when our opponent restarts the game.
+  Battleship.Controller.prototype.watch_for_restart = function () {
+    var self = this;
+    var restart_ref = this.my_player_ref.child('restart');
+    restart_ref.on('value', function(snap) {
+      if (snap.val() === 1) {
+        restart_ref.set(0);
+        self.resetMyBoardAndPiece();
+      }
+    });
+  };
+
+
+  Battleship.Controller.prototype.game_over = function () {
+    this.restart_game();
+  };
+
+
+  Battleship.Controller.prototype.restart_game = function () {
+    this.opponent_player_ref.child('restart').set(1);
+    this.resetMyBoardAndPiece();
+  };
+
+
+  Battleship.Controller.prototype.resetMyBoardAndPiece = function () {
+    this.my_board.clear();
+    var newPiece = new Battleship.Piece();
+    newPiece.writeToFirebase(this.my_player_ref.child('piece'));
+  };
+  
+  var canvas = $("#canvas0").get(0);
+  if (!canvas || !canvas.getContext || !canvas.getContext('2d'))
+    alert("You must use a browser that supports HTML5 Canvas to run this demo.");
+
+  function start() {
+    var battleship_ref = new Firebase('https://battlesomeships.firebaseio.com/');
+    var battleship_controller = new Battleship.Controller(battleship_ref);
+  }
+
+  start();
 });
