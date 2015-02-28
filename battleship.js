@@ -23,8 +23,12 @@ $(document).ready(function() {
   Battleship.BOARD_HEIGHT = 10;
   Battleship.BOARD_WIDTH = 10;
   Battleship.SQUARE_SIZE_PIXELS = 25;
-  Battleship.BOARD_HEIGHT_PIXELS = Battleship.BOARD_HEIGHT * Battleship.BLOCK_SIZE_PIXELS;
-  Battleship.BOARD_WIDTH_PIXELS = Battleship.BOARD_WIDTH * Battleship.BLOCK_SIZE_PIXELS;
+  Battleship.BOARD_HEIGHT_PIXELS = Battleship.BOARD_HEIGHT * Battleship.SQUARE_SIZE_PIXELS;
+
+  Battleship.BOARD_WIDTH_PIXELS = Battleship.BOARD_WIDTH * Battleship.SQUARE_SIZE_PIXELS;
+  $('canvas').attr('height',Battleship.BOARD_HEIGHT_PIXELS.toString()+'px');
+  $('canvas').attr('width',Battleship.BOARD_WIDTH_PIXELS.toString()+'px');
+
   Battleship.SHIPS = [
     {name:'carrier',size:5},
     {name:'battleship',size:4},
@@ -33,10 +37,14 @@ $(document).ready(function() {
     {name:'patrol boat',size:2}
   ];
 
-  Battleship.HIT = 'immahit!';
-  Battleship.EMPTY = 'nothinghere!';
+
+  // from 'this' players perspective
+  Battleship.WATER = 'itswaterandiknowit!';
   Battleship.BOAT = 'deresaboathere!';
-  Battleship.UNKNOWN = 'idontknowwhatshere!';
+
+  // from 'other' players perspective
+  Battleship.HIT = 'immahit!';
+  Battleship.MISS = 'nothingshere!';
 
   Battleship.BLOCK_BORDER_COLOR = 'black';
 
@@ -56,70 +64,97 @@ $(document).ready(function() {
     });
   };
 
-
-  //// Draws the contents of the board as well as the current piece.
-  Battleship.Board.prototype.draw = function () {
-    console.log('========= Draw Board start =========');
-    // Clear canvas.
-    this.context.clearRect(0, 0, Battleship.BOARD_WIDTH_PIXELS, Battleship.BOARD_HEIGHT_PIXELS);
-
+  Battleship.Board.prototype.draw_my_board = function () {
     // Iterate over columns / rows in board data and draw each non-empty block.
     var square_state,left,top
-    for (var x = 0; x < Battleship.BOARD_WIDTH; x++) {
-      for (var y = 0; y < Battleship.BOARD_HEIGHT; y++) {
-        square_state = this.get_square_state(x,y);
-        left = x * Battleship.SQUARE_SIZE_PIXELS;
-        top = y * Battleship.SQUARE_SIZE_PIXELS;
+    for (var c = 0; c < Battleship.BOARD_WIDTH; c++) {
+      for (var r = 0; r < Battleship.BOARD_HEIGHT; r++) {
+        square_state = this.get_square_state(r,c);
+        left = c * Battleship.SQUARE_SIZE_PIXELS;
+        top = r * Battleship.SQUARE_SIZE_PIXELS;
         this.context.lineWidth = 1;
         this.context.strokeStyle = Battleship.BLOCK_BORDER_COLOR;
-        if (square_state == Battleship.HIT) {
-          this.context.fillStyle = 'red';
-        }
-        else if (square_state == Battleship.EMPTY) {
-          this.context.fillStyle = 'blue';
-          console.log(square_state)
-        }
-        else if (square_state == Battleship.BOAT) {
+        if (square_state == Battleship.BOAT) {
           this.context.fillStyle = 'yellow';
         }
-        else {          
+        else if (square_state == Battleship.WATER) {
+          this.context.fillStyle = 'blue';
+        }
+        else if (square_state == Battleship.HIT) {
+          this.context.fillStyle = 'red';
+        }
+        else if (square_state == Battleship.MISS) {          
           this.context.fillStyle = 'green';
         }
-
         this.context.fillRect(left, top, Battleship.SQUARE_SIZE_PIXELS, Battleship.SQUARE_SIZE_PIXELS);
         this.context.strokeRect(left, top, Battleship.SQUARE_SIZE_PIXELS, Battleship.SQUARE_SIZE_PIXELS);
       }
     }
+  };
 
-    // If this isn't my board, dim it out with a 25% opacity black rectangle.
-    if (!this.is_my_board) {
-      this.context.fillStyle = "rgba(0, 0, 0, 0.25)";
-      this.context.fillRect(0, 0, Battleship.BOARD_WIDTH_PIXELS, Battleship.BOARD_HEIGHT_PIXELS);
+  Battleship.Board.prototype.draw_their_board = function () {
+    // Iterate over columns / rows in board data and draw each non-empty block.
+    var square_state,left,top
+    for (var c = 0; c < Battleship.BOARD_WIDTH; c++) {
+      for (var r = 0; r < Battleship.BOARD_HEIGHT; r++) {
+        square_state = this.get_square_state(r,c);
+        left = c * Battleship.SQUARE_SIZE_PIXELS;
+        top = r * Battleship.SQUARE_SIZE_PIXELS;
+        this.context.lineWidth = 1;
+        this.context.strokeStyle = 'white';
+        // this is an unknown square
+        if (square_state == Battleship.BOAT||square_state == Battleship.WATER) {
+          this.context.fillStyle = 'rgb(50,50,50)';
+        }
+        else if (square_state == Battleship.HIT) {
+          this.context.fillStyle = 'red';
+        }
+        else if (square_state == Battleship.MISS) {          
+          this.context.fillStyle = 'green';
+        }
+        this.context.fillRect(left, top, Battleship.SQUARE_SIZE_PIXELS, Battleship.SQUARE_SIZE_PIXELS);
+        this.context.strokeRect(left, top, Battleship.SQUARE_SIZE_PIXELS, Battleship.SQUARE_SIZE_PIXELS);
+      }
     }
-    console.log('========= Draw Board done0 =========');
+  };
+
+  //// Draws the contents of the board as well as the current piece.
+  Battleship.Board.prototype.draw = function () {
+    this.context.clearRect(0, 0, Battleship.BOARD_WIDTH_PIXELS, Battleship.BOARD_HEIGHT_PIXELS);
+    if (this.is_my_board) {
+      this.draw_my_board();
+    }
+    else {
+      this.draw_their_board();
+    }
+    // // If this isn't my board, dim it out with a 25% opacity black rectangle.
+    // if (!this.is_my_board) {
+    //   this.context.fillStyle = "rgba(0, 0, 0, 0.50)";
+    //   this.context.fillRect(0, 0, Battleship.BOARD_WIDTH_PIXELS, Battleship.BOARD_HEIGHT_PIXELS);
+    // }
   };
 
   //// Clear the board contents.
   Battleship.Board.prototype.clear = function () {
-    for (var i=0;i<this.BOARD_HEIGHT;i++) {
-      for (var j=0;j<this.BOARD_WIDTH;j++) {
-        this.set_square(i,j,this.EMPTY);
+    for (var i=0;i<Battleship.BOARD_HEIGHT;i++) {
+      for (var j=0;j<Battleship.BOARD_WIDTH;j++) {
+        this.set_square(i,j,Battleship.WATER);
       };
     }
   };
 
   //// Check if this piece will collide with another piece if it is place here
-  Battleship.Board.prototype.check_for_collision = function (col,row,ship_size,horizontal) {
+  Battleship.Board.prototype.check_for_collision = function (row,col,ship_size,horizontal) {
     if (horizontal) {
       for (var i = col; i < col+ship_size; i++) {
-        if (this.snapshot.child('board/' + row + '/' + i).val() != this.EMPTY) {
+        if (this.get_square_state(row,i) != Battleship.WATER) {
           return true;
         }
       };
     }
     else {
       for (var i = row; i < row+ship_size; i++) {        
-        if (this.snapshot.child('board/' + i + '/' + col).val() != this.EMPTY) {
+        if (this.get_square_state(row,i) != Battleship.WATER) {
           return true;
         }
       };
@@ -129,31 +164,34 @@ $(document).ready(function() {
 
   //// Create random board 
   Battleship.Board.prototype.create_random_board = function () {
-    var x,y;
+    var x,y,horizontal;
+    this.clear();
     for (var i = 0; i < Battleship.SHIPS.length; i++) {
-      while (false) {
-        if (Math.random() < 0.500000) { // horizontal
-          x = Math.floor(Math.random()*(this.BOARD_WIDTH-this.SHIPS[i].size));
-          y = Math.floor(Math.random()*this.BOARD_HEIGHT);          
+      while (true) {
+        horizontal = Math.random() < 0.500000;
+        if (horizontal) { // horizontal
+          x = Math.floor(Math.random()*(Battleship.BOARD_WIDTH-Battleship.SHIPS[i].size));
+          y = Math.floor(Math.random()*Battleship.BOARD_HEIGHT);          
         }
         else { // vertical
-          x = Math.floor(Math.random()*this.BOARD_WIDTH);
-          y = Math.floor(Math.random()*(this.BOARD_HEIGHT-this.SHIPS[i].size));
+          x = Math.floor(Math.random()*Battleship.BOARD_WIDTH);
+          y = Math.floor(Math.random()*(Battleship.BOARD_HEIGHT-Battleship.SHIPS[i].size));
         }
-        if (!this.check_for_collision(this.SHIPS[i].size,x,y)) {
+        if (!this.check_for_collision(y,x,Battleship.SHIPS[i].size,horizontal)) {
           break;
         }
       }
+      this.set_ship(y,x,Battleship.SHIPS[i].size,horizontal);
     };
   }
 
-  Battleship.Board.prototype.set_ship = function (col,row,ship_size,horizontal) {
+  Battleship.Board.prototype.set_ship = function (row,col,ship_size,horizontal) {
     for (var i = 0; i < ship_size; i++) {
       if (horizontal) {
-        this.player_ref.child('board').child(row+i).child(col).set(this.BOAT);
+        this.set_square(row+i,col,Battleship.BOAT);
       }
       else {
-        this.player_ref.child('board').child(row).child(col+i).set(this.BOAT);        
+        this.set_square(row,col+i,Battleship.BOAT);      
       }
     };
   }
@@ -164,10 +202,42 @@ $(document).ready(function() {
 
   Battleship.Board.prototype.get_square_state = function (row,col) {
     var square_contents = this.snapshot === null ? null : this.snapshot.child('board/'+row+'/'+col).val();
-    return square_contents || Battleship.EMPTY;
+    return square_contents || Battleship.WATER;
   }
 
+  Battleship.Board.get_position = function (mousex,mousey) {
+    var r = Math.floor(mousey/Battleship.SQUARE_SIZE_PIXELS);
+    var c = Math.floor(mousex/Battleship.SQUARE_SIZE_PIXELS);
+    return {row:r,col:c};
+  }
 
+  Battleship.Board.prototype.make_guess = function (row,col) {
+    var state = this.get_square_state(row,col);
+    if (state == Battleship.BOAT) {
+      this.set_square(row,col,Battleship.HIT);
+    }
+    if (state == Battleship.WATER) {
+      this.set_square(row,col,Battleship.MISS);
+    }
+    return state;
+  }
+
+  Battleship.Board.prototype.print_board = function() {
+    var st,state;
+    for (var r = 0; r < Battleship.BOARD_HEIGHT; r++) {
+      st = '';
+      for (var c = 0; c < Battleship.BOARD_WIDTH; c++) {
+        state = this.get_square_state(r,c);
+        if (state==Battleship.BOAT) {
+          st += 'B ';
+        }
+        else if (state==Battleship.WATER) {
+          st += '- ';
+        }
+      };
+      console.log(st)
+    };
+  }
 /* =========================================================
                         CONTROLLER
    ========================================================= */
@@ -175,29 +245,24 @@ $(document).ready(function() {
   Battleship.PLAYING_STATE = { Watching: 0, Joining: 1, Playing: 2 };
 
   Battleship.Controller = function (battleship_ref) {
-    console.log('=============== Controller Start ===============');
     this.battleship_ref = battleship_ref;
     this.create_boards();
 
     this.playing_state = Battleship.PLAYING_STATE.Watching;
     this.wait_to_join();
-    console.log('=============== Controller Done ===============');
   };
 
   Battleship.Controller.prototype.create_boards = function () {
-    console.log('============= Create Boards Start =============');
     this.boards = [];
     for(var i = 0; i <= 1; i++) {
       var player_ref = this.battleship_ref.child('player' + i);
       var canvas = $('#canvas' + i).get(0);
       this.boards.push(new Battleship.Board(canvas, player_ref));
     }
-    console.log('============= Create Boards End =============');
   };
 
 
   Battleship.Controller.prototype.wait_to_join = function() {
-    console.log('============= Wait To Join Start =============');
     var self = this;
 
     // Listen on 'online' location for player0 and player1.
@@ -212,7 +277,6 @@ $(document).ready(function() {
         self.try_to_join(1);
       }
     });
-    console.log('============= Wait To Join End =============');
   };
 
   //// Try to join the game as the specified player_num.
@@ -236,12 +300,11 @@ $(document).ready(function() {
         self.playing_state = Battleship.PLAYING_STATE.Watching;
       }
     });
+
   };
 
 
-  /**
-   * Once we've joined, enable controlling our player.
-   */
+  //// Once we've joined, enable controlling our player.
   Battleship.Controller.prototype.start_playing = function (player_num) {
     this.my_player_ref = this.battleship_ref.child('player' + player_num);
     this.opponent_player_ref = this.battleship_ref.child('player' + (1 - player_num));
@@ -253,7 +316,7 @@ $(document).ready(function() {
     this.my_player_ref.child('online').onDisconnect().remove();
 
     // Detect when other player pushes rows to our board.
-    this.watch_for_extra_rows();
+    //ERASEthis.watch_for_extra_rows();
 
     // Detect when game is restarted by other player.
     this.watch_for_restart();
@@ -266,9 +329,9 @@ $(document).ready(function() {
       self.restart_game();
     });
 
-    this.initialize_piece();
+    //ERASEthis.initialize_piece();
     this.enable_keyboard();
-    this.reset_gravity();
+    //ERASEthis.reset_gravity();
   };
 
   Battleship.Controller.prototype.initialize_piece = function() {
@@ -288,9 +351,22 @@ $(document).ready(function() {
   };
 
 
+
   //// Sets up handlers for all keyboard commands.   
   Battleship.Controller.prototype.enable_keyboard = function () {
     var self = this;
+    $(document).on('click','canvas',function (evt) {
+      var index = Number($(this).attr('data'));
+      var pos = Battleship.Board.get_position(evt.offsetX,evt.offsetY);
+      // first we're going to assume we're guessing
+      // TODO: 
+      // [ ] figure out which board we're guessing from
+      // [ ] ensure guessing is what we're trying to do
+      // [ ] special case: clicking on already clicked tiles
+      // [ ] working out 
+      var state = self.boards[index].make_guess(pos.row,pos.col);
+    });
+/*
     $(document).on('keydown', function (evt) {
       if (self.fallingPiece === null)
         return; // piece isn't initialized yet.
@@ -337,6 +413,7 @@ $(document).ready(function() {
 
       return true;
     });
+*/
   };
 
 
@@ -382,9 +459,7 @@ $(document).ready(function() {
   };
 
 
-  /**
-   * Detect when our opponent pushes extra rows to us.
-   */
+  //// Detect when our opponent pushes extra rows to us.
   Battleship.Controller.prototype.watch_for_extra_rows = function () {
     var self = this;
     var extraRowsRef = this.myPlayerRef.child('extrarows');
