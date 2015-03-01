@@ -147,57 +147,82 @@ $(document).ready(function() {
   Battleship.Board.prototype.check_for_collision = function (row,col,ship_size,horizontal) {
     if (horizontal) {
       for (var i = col; i < col+ship_size; i++) {
-        if (this.get_square_state(row,i) != Battleship.WATER) {
+        if (this.data_board[row][i] != Battleship.WATER) {
           return true;
         }
       };
     }
     else {
-      for (var i = row; i < row+ship_size; i++) {        
-        if (this.get_square_state(row,i) != Battleship.WATER) {
+      for (var i = row; i < row+ship_size; i++) {      
+        if (this.data_board[i][col] != Battleship.WATER) {
           return true;
         }
       };
     }
     return false;
+  };
+
+  Battleship.Board.prototype.init_empty_data_board = function () {
+    this.data_board = [];
+    for (var r = 0; r < Battleship.BOARD_HEIGHT; r++) {
+      this.data_board.push([]);
+      for (var c = 0; c < Battleship.BOARD_WIDTH; c++) {
+        this.data_board[r].push(Battleship.WATER);
+      };
+    };
   }
 
   //// Create random board 
   Battleship.Board.prototype.create_random_board = function () {
-    var x,y,horizontal;
+    var col,row,horizontal;
     this.clear();
+    this.init_empty_data_board();
     for (var i = 0; i < Battleship.SHIPS.length; i++) {
       while (true) {
         horizontal = Math.random() < 0.500000;
         if (horizontal) { // horizontal
-          x = Math.floor(Math.random()*(Battleship.BOARD_WIDTH-Battleship.SHIPS[i].size));
-          y = Math.floor(Math.random()*Battleship.BOARD_HEIGHT);          
+          col = Math.floor(Math.random()*(Battleship.BOARD_WIDTH-Battleship.SHIPS[i].size));
+          row = Math.floor(Math.random()*Battleship.BOARD_HEIGHT);          
         }
         else { // vertical
-          x = Math.floor(Math.random()*Battleship.BOARD_WIDTH);
-          y = Math.floor(Math.random()*(Battleship.BOARD_HEIGHT-Battleship.SHIPS[i].size));
+          col = Math.floor(Math.random()*Battleship.BOARD_WIDTH);
+          row = Math.floor(Math.random()*(Battleship.BOARD_HEIGHT-Battleship.SHIPS[i].size));
         }
-        if (!this.check_for_collision(y,x,Battleship.SHIPS[i].size,horizontal)) {
+        if (!this.check_for_collision(row,col,Battleship.SHIPS[i].size,horizontal)) {
           break;
         }
       }
-      this.set_ship(y,x,Battleship.SHIPS[i].size,horizontal);
+      this.set_ship(row,col,Battleship.SHIPS[i].size,horizontal,Battleship.SHIPS[i].name);
     };
+    this.set_board();
   }
 
-  Battleship.Board.prototype.set_ship = function (row,col,ship_size,horizontal) {
+  Battleship.Board.prototype.set_ship = function (row,col,ship_size,horizontal,ship_name) {
     for (var i = 0; i < ship_size; i++) {
       if (horizontal) {
-        this.set_square(row+i,col,Battleship.BOAT);
+        this.data_board[row][col+i] = ship_name;
       }
       else {
-        this.set_square(row,col+i,Battleship.BOAT);      
+        this.data_board[row+i][col] = ship_name;      
       }
     };
   }
 
   Battleship.Board.prototype.set_square = function (row,col,square_contents) {
     this.player_ref.child('board').child(row).child(col).set(square_contents);
+  }
+
+  Battleship.Board.prototype.set_board = function () {
+    for (var r = 0; r < Battleship.BOARD_HEIGHT; r++) {
+      for (var c = 0; c < Battleship.BOARD_WIDTH; c++) {
+        if (this.data_board[r][c] != Battleship.WATER) {
+          this.set_square(r,c,Battleship.BOAT);
+        }
+        else {
+          this.set_square(r,c,Battleship.WATER);
+        }
+      };
+    };
   }
 
   Battleship.Board.prototype.get_square_state = function (row,col) {
@@ -211,10 +236,37 @@ $(document).ready(function() {
     return {row:r,col:c};
   }
 
+  Battleship.Board.prototype.is_boat_sunk = function (name,row,col) {
+    /*
+    var boat_size;
+    for (var i = 0; i < Battleship.SHIPS.length; i++) {
+      if (Battleship.SHIPS[i].name == name) { 
+        boat_size = Battleship.SHIPS[i].size;
+        break;
+      }
+    };
+    */
+
+    for (var r = 0; r < Battleship.BOARD_HEIGHT; r++) {
+      for (var c = 0; c < Battleship.BOARD_WIDTH; c++) {
+        if (this.data_board[r][c] == name) {
+          if (this.get_square_state(r,c) != Battleship.HIT) {
+            return false;
+          }
+        }
+      };
+    };
+    return true;
+  }
   Battleship.Board.prototype.make_guess = function (row,col) {
     var state = this.get_square_state(row,col);
     if (state == Battleship.BOAT) {
       this.set_square(row,col,Battleship.HIT);
+      var boat_name = this.data_board[row][col];
+      if (this.is_boat_sunk(boat_name,row,col)) {
+        // boat is sunk
+        alert('you sunk '+boat_name);
+      }
     }
     if (state == Battleship.WATER) {
       this.set_square(row,col,Battleship.MISS);
