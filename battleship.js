@@ -1,3 +1,6 @@
+
+var Battleship = {};
+
 $(document).ready(function() {
 /* =========================================================
                 CONFIG, CONSTANTS, + GLOBALS
@@ -18,8 +21,6 @@ $(document).ready(function() {
 /* =========================================================
                         BATTLESHIP
    ========================================================= */
-
-  var Battleship = {};
   Battleship.BOARD_HEIGHT = 10;
   Battleship.BOARD_WIDTH = 10;
   Battleship.SQUARE_SIZE_PIXELS = 25;
@@ -36,7 +37,6 @@ $(document).ready(function() {
     {name:'destroyer',size:3},
     {name:'patrol boat',size:2}
   ];
-
 
   // from 'this' players perspective
   Battleship.WATER = 'itswaterandiknowit!';
@@ -258,6 +258,7 @@ $(document).ready(function() {
     };
     return true;
   }
+
   Battleship.Board.prototype.make_guess = function (row,col) {
     var state = this.get_square_state(row,col);
     if (state == Battleship.BOAT) {
@@ -296,12 +297,25 @@ $(document).ready(function() {
 
   Battleship.PLAYING_STATE = { Watching: 0, Joining: 1, Playing: 2 };
 
-  Battleship.Controller = function (battleship_ref) {
-    this.battleship_ref = battleship_ref;
-    this.create_boards();
+  Battleship.Controller = function (gameroom_ref,myid) {
+    this.gameroom_ref = gameroom_ref;
+    this.battleship_ref = gameroom_ref.child('game');
 
-    this.playing_state = Battleship.PLAYING_STATE.Watching;
-    this.wait_to_join();
+    this.create_boards();
+    var self=this;
+    this.gameroom_ref.child('user_list').once('value',function (userlist_snap) {
+      var i=0;
+      userlist_snap.forEach(function(user_snap) {
+        if (user_snap.key() == myid) {
+          console.log('ill be player ' + i.toString());
+          self.start_playing(i);
+        }
+        i+=1;
+      })
+    })
+
+    // this.playing_state = Battleship.PLAYING_STATE.Watching;
+    // this.wait_to_join();
   };
 
   Battleship.Controller.prototype.create_boards = function () {
@@ -318,17 +332,32 @@ $(document).ready(function() {
     var self = this;
 
     // Listen on 'online' location for player0 and player1.
-    this.battleship_ref.child('player0/online').on('value', function(online_snap) {
-      if (online_snap.val() === null && self.playing_state === Battleship.PLAYING_STATE.Watching) {
+    // this.battleship_ref.child('player0/online').on('value', function(online_snap) {
+    //   if (online_snap.val() === null && self.playing_state === Battleship.PLAYING_STATE.Watching) {
+    //     self.try_to_join(0);
+    //   }
+    // });
+
+    // this.battleship_ref.child('player1/online').on('value', function(online_snap) {
+    //   if (online_snap.val() === null && self.playing_state === Battleship.PLAYING_STATE.Watching) {
+    //     self.try_to_join(1);
+    //   }
+    // });
+
+    this.battleship_ref.child('player0/online').once('value', function(online_snap) {
+      if (online_snap.val() === null) {
         self.try_to_join(0);
+        return;
       }
     });
 
-    this.battleship_ref.child('player1/online').on('value', function(online_snap) {
-      if (online_snap.val() === null && self.playing_state === Battleship.PLAYING_STATE.Watching) {
+    this.battleship_ref.child('player1/online').once('value', function(online_snap) {
+      if (online_snap.val() === null) {
         self.try_to_join(1);
       }
     });
+
+    console.log('idk');
   };
 
   //// Try to join the game as the specified player_num.
@@ -347,12 +376,10 @@ $(document).ready(function() {
     }, function(error, committed) {
       if (committed) { // We got in!
         self.playing_state = Battleship.PLAYING_STATE.Playing;
-        self.start_playing(player_num);
       } else {
         self.playing_state = Battleship.PLAYING_STATE.Watching;
       }
     });
-
   };
 
 
@@ -418,7 +445,7 @@ $(document).ready(function() {
       // [ ] working out 
       var state = self.boards[index].make_guess(pos.row,pos.col);
     });
-/*
+    /*
     $(document).on('keydown', function (evt) {
       if (self.fallingPiece === null)
         return; // piece isn't initialized yet.
@@ -465,7 +492,7 @@ $(document).ready(function() {
 
       return true;
     });
-*/
+    */
   };
 
 
@@ -560,16 +587,6 @@ $(document).ready(function() {
     this.my_board.clear();
     var newPiece = new Battleship.Piece();
     newPiece.writeToFirebase(this.my_player_ref.child('piece'));
-  };
+  }; 
   
-  var canvas = $("#canvas0").get(0);
-  if (!canvas || !canvas.getContext || !canvas.getContext('2d'))
-    alert("You must use a browser that supports HTML5 Canvas to run this demo.");
-
-  function start() {
-    var battleship_ref = new Firebase('https://battlesomeships.firebaseio.com/');
-    var battleship_controller = new Battleship.Controller(battleship_ref);
-  }
-
-  start();
 });

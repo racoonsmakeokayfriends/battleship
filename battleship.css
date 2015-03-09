@@ -4,86 +4,70 @@
   box-sizing: border-box;
 }
 
-/* =========================================================
-   Declare colors, fonts
-   ========================================================= */
 /* body */
-/* grid */
 /* modals */
+/***********************************
+ *           MAIN STUFF            *
+ ***********************************/
 body {
   background-color: #373633;
   font-family: "Lato", Calibri, Arial, sans-serif;
   color: #ffffff;
-  text-align: center;
 }
 
-.container {
-  width: 275px;
-  height: 275px;
-  margin: 200px auto;
+header {
+  font-size: 2.0em;
+}
+
+.page {
+  width: 75%;
+  min-width: 1000px;
+  min-height: 600px;
+  height: 500px;
+  background-color: rgba(0, 0, 0, 0.3);
+  text-align: center;
+  margin: auto;
+  /* padding:100px 5px; */
   position: relative;
 }
 
-/**********************************
- *           GRID STUFF           *
- **********************************/
-.grid {
-  background: none;
+/***********************************
+ *          BUTTON STUFF           *
+ ***********************************/
+button.btn {
   border: none;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+  background: none;
+  cursor: pointer;
+  display: inline-block;
+  margin: 15px 30px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+  outline: none;
+  position: relative;
+  width: auto;
+  padding: 10px 10px;
   text-align: center;
-  margin-left: auto;
-  margin-right: auto;
-  width: 200px;
-  position: absolute;
-  left: 75px;
-  top: 75px;
+  /* style */
+  color: #fff;
+  border-radius: 20px;
+  background-color: #17aa56;
+  box-shadow: 0 6px #119e4d;
 }
 
-.grid:after {
-  content: "";
-  display: table;
-  clear: both;
+button.btn:hover {
+  top: 2px;
+  box-shadow: 0 4px #119e4d;
 }
 
-.grid .square {
-  background-color: #ff0000;
-  border: 2px solid rgba(255, 255, 255, 0.9);
-  float: left;
-  padding: 5px;
-  width: 20%;
-  height: 40px;
+button.btn:active {
+  top: 6px;
+  box-shadow: 0 0 #119e4d;
 }
 
-.grid .square.fill {
-  background-color: #000;
-}
-
-.grid .square.mistake {
-  background-color: #ddd;
-  color: #ff0000;
-}
-
-.grid .square.X {
-  background-color: #ffffff;
-  color: #000000;
-}
-
-.grid .square.mistake::after,
-.grid .square.X::after {
-  content: 'X';
-}
-
-button.X::after {
-  content: 'X';
-}
-
-button.fill::after {
-  content: '/';
-}
-
-canvas {
-  border: 1px solid blue;
-}
 /***********************************
  *           MODAL STUFF           *
  ***********************************/
@@ -93,22 +77,20 @@ canvas {
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.9);
+  background-color: rgba(0, 0, 0, 0.7);
   z-index: 100;
 }
 
 .md-content {
-  background-color: #63997A;
-  color: #ffffff;
   position: relative;
-  width: 500px;
   margin: 100px auto;
   padding: 20px;
+  width: 500px;
+  height: auto;
+  background-color: #40805C;
+  color: #ffffff;
 }
 
-/*------------
-    Variants  
-  ------------*/
 .md-hd {
   margin-bottom: 10px;
   padding: 0.4em;
@@ -117,28 +99,169 @@ canvas {
   font-weight: 600;
   letter-spacing: 1px;
   background-color: #40805C;
+  color: #ffffff;
 }
 
 .md-ft {
   /* TODO */
 }
 
+/***********************************
+ *           LIST STUFF            *
+ ***********************************/
+ul[class*='col-']:after {
+  content: "";
+  display: table;
+  clear: both;
+}
 
-/**********************************
- *           MISC STUFF           *
- **********************************/
-.left {
+ul[class*='col-'] li {
   float: left;
 }
 
-.right {
+ul.col-1 li {
+  width: 100.0%;
+}
+
+ul.col-2 li {
+  width: 50.0%;
+}
+
+ul.col-3 li {
+  width: 33.3%;
+}
+
+ul.col-4 li {
+  width: 25.0%;
+}
+
+ul.col-5 li {
+  width: 20.3%;
+}
+
+ul {
+  list-style: none;
+}
+
+ul.interactive li {
+  cursor: pointer;
+}
+
+/*------------
+   User Lists  
+  ------------*/
+.list-users .user .check {
+  margin-right: 5px;
+}
+
+.list-users {
+  width: 100%;
+  text-align: left;
+}
+
+.list-users .user {
+  padding: 5px;
+}
+
+/*------------
+ Chatlog Lists  
+  ------------*/
+.chatlog {
+  background-color: rgba(255, 255, 255, 0.2);
+  min-width: 250px;
+  width: 25%;
+  height: 80%;
+  text-align: left;
+  padding: 5px;
+  float: left;
+  position: absolute;
+  top: 0;
+  /* margin: 2.5% 0; */
+  overflow-y: scroll;
+}
+
+.chat-input-container {
+  float: left;
+  position: absolute;
+  bottom: 0;
+  display: table;
+}
+
+.chat-input-container input {
+  margin: 0em;
+  padding: 0.85em 1.2em;
+  font-size: 0.875em;
+  background-color: #FFFFFF;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  outline: none;
+  color: rgba(0, 0, 0, 0.7);
+  border-radius: 0.3125em;
+  display: table-cell;
+  border-top-right-radius: 0px;
+  border-bottom-right-radius: 0px;
+  border-right: none;
+  float: left;
+  height: 40px;
+}
+
+.chat-input-container button {
+  border-radius: 0.3125em;
+  display: table-cell;
+  border-top-left-radius: 0px;
+  border-bottom-left-radius: 0px;
+  white-space: nowrap;
+  box-shadow: none;
+  height: 40px;
+  float: left;
+  margin: 0em;
+}
+
+.chat-input-container button:hover {
+  top: 0px;
+  opacity: 0.8;
+  box-shadow: none;
+}
+
+.chat-input-container button:active {
+  top: 0px;
+  box-shadow: none;
+}
+
+.chatlog .msg {
+  margin: 0.5em 0.2em;
+}
+
+#game_user_list {
+  display: none;
+}
+
+.msg .msg-text {
+  margin: 0.2em 0.4em;
+}
+
+.msg .timestamp {
   float: right;
 }
 
+/***********************************
+ *           MISC. STUFF           *
+ ***********************************/
 .hidden {
   display: none;
 }
 
-.circular {
-  border-radius: 100%;
+.container input {
+  border-radius: 3px;
+  padding: 0px 10px;
+  height: 30px;
+  font-size: 18px;
+  font-weight: normal;
+  outline: none;
+  border: 1px solid #CCC;
+}
+
+canvas {
+  height: 250px;
+  width: 250px;
+  background-color: violet;
 }
