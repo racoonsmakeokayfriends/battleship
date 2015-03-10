@@ -307,15 +307,11 @@ $(document).ready(function() {
       var i=0;
       userlist_snap.forEach(function(user_snap) {
         if (user_snap.key() == myid) {
-          console.log('ill be player ' + i.toString());
           self.start_playing(i);
         }
         i+=1;
       })
     })
-
-    // this.playing_state = Battleship.PLAYING_STATE.Watching;
-    // this.wait_to_join();
   };
 
   Battleship.Controller.prototype.create_boards = function () {
@@ -327,7 +323,7 @@ $(document).ready(function() {
     }
   };
 
-
+  /*
   Battleship.Controller.prototype.wait_to_join = function() {
     var self = this;
 
@@ -381,6 +377,16 @@ $(document).ready(function() {
       }
     });
   };
+  */
+
+  function inform_turn_info(is_my_turn) {
+    if (is_my_turn) {        
+      $('#turn-info').text('your turn!')
+    }
+    else {       
+      $('#turn-info').text('other player\'s turn!')
+    }
+  }
 
 
   //// Once we've joined, enable controlling our player.
@@ -390,10 +396,16 @@ $(document).ready(function() {
     this.my_board = this.boards[player_num];
     this.my_board.is_my_board = true;
     this.my_board.draw();
+    this.battleship_ref.child('player_turn').set(0);
+    inform_turn_info(player_num == 0);
+    this.my_num = player_num;
 
     // Clear my_player_ref 'online' status when we disconnect so somebody else can join.
     this.my_player_ref.child('online').onDisconnect().remove();
 
+    this.battleship_ref.child('player_turn').on('value',function (snapshot) {
+      inform_turn_info(snapshot.val() == self.my_num);
+    })
     // Detect when other player pushes rows to our board.
     //ERASEthis.watch_for_extra_rows();
 
@@ -408,9 +420,7 @@ $(document).ready(function() {
       self.restart_game();
     });
 
-    //ERASEthis.initialize_piece();
-    this.enable_keyboard();
-    //ERASEthis.reset_gravity();
+    this.enable_mouse();
   };
 
   Battleship.Controller.prototype.initialize_piece = function() {
@@ -431,67 +441,72 @@ $(document).ready(function() {
 
 
 
-  //// Sets up handlers for all keyboard commands.   
-  Battleship.Controller.prototype.enable_keyboard = function () {
+  //// Sets up handlers for all mouse commands.   
+  Battleship.Controller.prototype.enable_mouse = function () {
     var self = this;
     $(document).on('click','canvas',function (evt) {
-      var index = Number($(this).attr('data'));
-      var pos = Battleship.Board.get_position(evt.offsetX,evt.offsetY);
-      // first we're going to assume we're guessing
-      // TODO: 
-      // [ ] figure out which board we're guessing from
-      // [ ] ensure guessing is what we're trying to do
-      // [ ] special case: clicking on already clicked tiles
-      // [ ] working out 
-      var state = self.boards[index].make_guess(pos.row,pos.col);
+      if ($(this).attr('data')==self.my_num) {
+        // TODO: [ ] inform user that's their board
+        return;
+      }
+      self.battleship_ref.child('player_turn').once('value',function (snapshot) {
+        if (snapshot.val() == self.my_num) { 
+          var pos = Battleship.Board.get_position(evt.offsetX,evt.offsetY);
+          // TODO: 
+          // [ ] ensure guessing is what we're trying to do
+          // [ ] special case: clicking on already clicked tiles
+          var state = self.boards[self.my_num].make_guess(pos.row,pos.col);
+          self.battleship_ref.child('player_turn').set(1-snapshot.val());
+        }
+      });
     });
     /*
-    $(document).on('keydown', function (evt) {
-      if (self.fallingPiece === null)
-        return; // piece isn't initialized yet.
+      $(document).on('keydown', function (evt) {
+        if (self.fallingPiece === null)
+          return; // piece isn't initialized yet.
 
-      var keyCode = evt.which;
-      var key = { space:32, left:37, up:38, right:39, down:40 };
+        var keyCode = evt.which;
+        var key = { space:32, left:37, up:38, right:39, down:40 };
 
-      var newPiece = null;
-      switch (keyCode) {
-        case key.left:
-          newPiece = self.fallingPiece.moveLeft();
-          break;
-        case key.up:
-          newPiece = self.fallingPiece.rotate();
-          break;
-        case key.right:
-          newPiece = self.fallingPiece.moveRight();
-          break;
-        case key.down:
-          newPiece = self.fallingPiece.drop();
-          break;
-        case key.space:
-          // Drop as far as we can.
-          var droppedPiece = self.fallingPiece;
-          do {
-            newPiece = droppedPiece;
-            droppedPiece = droppedPiece.drop();
-          } while (!self.myBoard.checkForPieceCollision(droppedPiece));
-          break;
-      }
-
-      if (newPiece !== null) {
-        // If the new piece position / rotation is valid, update self.fallingPiece and firebase.
-        if (!self.myBoard.checkForPieceCollision(newPiece)) {
-          // If the keypress moved the piece down, reset gravity.
-          if (self.fallingPiece.y != newPiece.y) {
-            self.resetGravity();
-          }
-
-          newPiece.writeToFirebase(self.myPlayerRef.child('piece'));
+        var newPiece = null;
+        switch (keyCode) {
+          case key.left:
+            newPiece = self.fallingPiece.moveLeft();
+            break;
+          case key.up:
+            newPiece = self.fallingPiece.rotate();
+            break;
+          case key.right:
+            newPiece = self.fallingPiece.moveRight();
+            break;
+          case key.down:
+            newPiece = self.fallingPiece.drop();
+            break;
+          case key.space:
+            // Drop as far as we can.
+            var droppedPiece = self.fallingPiece;
+            do {
+              newPiece = droppedPiece;
+              droppedPiece = droppedPiece.drop();
+            } while (!self.myBoard.checkForPieceCollision(droppedPiece));
+            break;
         }
-        return false; // handled
-      }
 
-      return true;
-    });
+        if (newPiece !== null) {
+          // If the new piece position / rotation is valid, update self.fallingPiece and firebase.
+          if (!self.myBoard.checkForPieceCollision(newPiece)) {
+            // If the keypress moved the piece down, reset gravity.
+            if (self.fallingPiece.y != newPiece.y) {
+              self.resetGravity();
+            }
+
+            newPiece.writeToFirebase(self.myPlayerRef.child('piece'));
+          }
+          return false; // handled
+        }
+
+        return true;
+      });
     */
   };
 

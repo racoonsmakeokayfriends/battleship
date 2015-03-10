@@ -9,12 +9,13 @@ todo:
   [ ] Player Made Boards
   [x] fix board collision
   [/] hiding the other player's board
-  [ ] taking turns
+  [x] taking turns
+  [ ] BUG: when making guess, it seems to believe the boards switched
   [x] when boat is sunk, show that
       [x] determine when boat is sunken
   [ ] display boat sinking
-  [ ] game rooms
-  [ ] flagging
+  [x] game rooms
+  [ ] flagging (like minesweeper)
 
 
 
