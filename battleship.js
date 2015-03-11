@@ -455,7 +455,7 @@ $(document).ready(function() {
           // TODO: 
           // [ ] ensure guessing is what we're trying to do
           // [ ] special case: clicking on already clicked tiles
-          var state = self.boards[self.my_num].make_guess(pos.row,pos.col);
+          var state = self.boards[1-self.my_num].make_guess(pos.row,pos.col);
           self.battleship_ref.child('player_turn').set(1-snapshot.val());
         }
       });
