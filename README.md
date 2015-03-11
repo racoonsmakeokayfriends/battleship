@@ -6,6 +6,11 @@ todo:
     [ ] special case: clicking on already clicked tiles
     [ ] not clicking your own board
   [ ] Game over
+    [x] check when it happens
+    [ ] alert both players when it happens
+    [ ] ask players if theyd like to play again
+    [ ] if not, take back to lobby
+    [ ] if so, restart the game
   [ ] Player Made Boards
   [x] fix board collision
   [/] hiding the other player's board
@@ -13,10 +18,10 @@ todo:
   [x] BUG: when making guess, it seems to believe the boards switched
   [x] when boat is sunk, show that
       [x] determine when boat is sunken
-  [ ] display boat sinking
+  [x] display boat sinking
   [x] game rooms
   [ ] flagging (like minesweeper)
-  [ ] BUG: figure out why printboard != board displayed
+  [x] BUG: figure out why printboard != board displayed
 
 
 

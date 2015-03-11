@@ -228,7 +228,7 @@ $(document).ready(function() {
     this.player_ref.child('board').child(row).child(col).set(square_state);
   }
   Battleship.Board.prototype.set_ship_location = function (ship_name,ship_size,row,col,horizontal) {
-    var data = {name:ship_name,ship_size:ship_size,row:row,col:col,horizontal:horizontal};
+    var data = {name:ship_name,ship_size:ship_size,row:row,col:col,horizontal:horizontal,sunk:false};
     this.player_ref.child('ships').child(ship_name).set(data);
   }
 
@@ -339,6 +339,16 @@ $(document).ready(function() {
     return ship_data;
   }
 
+  Battleship.Board.prototype.check_if_game_over = function () {
+    var gameover = true;
+    this.player_ref.child('ships').once('value',function (snapshot) {
+      snapshot.forEach(function (ship_snap) {
+        if (!ship_snap.val().sunk) {gameover=false;}
+      });
+    });
+    return gameover;
+  }
+
   Battleship.Board.prototype.sink_the_ship = function (ship_data) {
     var r=ship_data.row;
     var c=ship_data.col;
@@ -350,6 +360,7 @@ $(document).ready(function() {
         this.set_square_state(r+i,c,Battleship.SUNK); 
       } 
     };
+    this.player_ref.child('ships').child(ship_data.name).child('sunk').set(true)
   }
 
   Battleship.Board.prototype.make_guess = function (row,col) {
@@ -361,8 +372,9 @@ $(document).ready(function() {
         // boat is sunk
         alert('you sunk '+ship_sank.name);
         this.sink_the_ship(ship_sank)
-        // TODO: display sunken boat
-        // TODO: check if gameover
+        if (this.check_if_game_over()) {
+          alert('gameover')
+        }
       }
     }
     if (state == Battleship.WATER) {
