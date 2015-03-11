@@ -45,6 +45,7 @@ $(document).ready(function() {
   // from 'other' players perspective
   Battleship.HIT = 'immahit!';
   Battleship.MISS = 'nothingshere!';
+  Battleship.SUNK = 'immadownanddead!';
 
   Battleship.BLOCK_BORDER_COLOR = 'black';
 
@@ -86,6 +87,9 @@ $(document).ready(function() {
         else if (square_state == Battleship.MISS) {          
           this.context.fillStyle = 'green';
         }
+        else if (square_state == Battleship.SUNK) {          
+          this.context.fillStyle = 'black';
+        }
         this.context.fillRect(left, top, Battleship.SQUARE_SIZE_PIXELS, Battleship.SQUARE_SIZE_PIXELS);
         this.context.strokeRect(left, top, Battleship.SQUARE_SIZE_PIXELS, Battleship.SQUARE_SIZE_PIXELS);
       }
@@ -112,6 +116,9 @@ $(document).ready(function() {
         else if (square_state == Battleship.MISS) {          
           this.context.fillStyle = 'green';
         }
+        else if (square_state == Battleship.SUNK) {          
+          this.context.fillStyle = 'black';
+        }
         this.context.fillRect(left, top, Battleship.SQUARE_SIZE_PIXELS, Battleship.SQUARE_SIZE_PIXELS);
         this.context.strokeRect(left, top, Battleship.SQUARE_SIZE_PIXELS, Battleship.SQUARE_SIZE_PIXELS);
       }
@@ -135,10 +142,10 @@ $(document).ready(function() {
   };
 
   //// Clear the board contents.
-  Battleship.Board.prototype.clear = function () {
+  Battleship.Board.prototype.clear_board = function () {
     for (var i=0;i<Battleship.BOARD_HEIGHT;i++) {
       for (var j=0;j<Battleship.BOARD_WIDTH;j++) {
-        this.set_square(i,j,Battleship.WATER);
+        this.set_square_state(i,j,Battleship.WATER);
       };
     }
   };
@@ -175,7 +182,7 @@ $(document).ready(function() {
   //// Create random board 
   Battleship.Board.prototype.create_random_board = function () {
     var col,row,horizontal;
-    this.clear();
+    this.clear_board();
     this.init_empty_data_board();
     for (var i = 0; i < Battleship.SHIPS.length; i++) {
       while (true) {
@@ -197,6 +204,14 @@ $(document).ready(function() {
     this.set_board();
   }
 
+  //// Clear the board contents.
+  Battleship.Board.prototype.is_boat = function (sq_state) {
+    for (var i=0;i<Battleship.SHIPS.length;i++) {
+      if (sq_state == Battleship.SHIPS[i].name) { return true; }
+    }
+    return false;
+  };
+
   Battleship.Board.prototype.set_ship = function (row,col,ship_size,horizontal,ship_name) {
     for (var i = 0; i < ship_size; i++) {
       if (horizontal) {
@@ -206,21 +221,29 @@ $(document).ready(function() {
         this.data_board[row+i][col] = ship_name;      
       }
     };
+    this.set_ship_location(ship_name,ship_size,row,col,horizontal);
   }
 
-  Battleship.Board.prototype.set_square = function (row,col,square_contents) {
-    this.player_ref.child('board').child(row).child(col).set(square_contents);
+  Battleship.Board.prototype.set_square_state = function (row,col,square_state) {
+    this.player_ref.child('board').child(row).child(col).set(square_state);
+  }
+  Battleship.Board.prototype.set_ship_location = function (ship_name,ship_size,row,col,horizontal) {
+    var data = {name:ship_name,ship_size:ship_size,row:row,col:col,horizontal:horizontal};
+    this.player_ref.child('ships').child(ship_name).set(data);
   }
 
   Battleship.Board.prototype.set_board = function () {
     for (var r = 0; r < Battleship.BOARD_HEIGHT; r++) {
       for (var c = 0; c < Battleship.BOARD_WIDTH; c++) {
+        
         if (this.data_board[r][c] != Battleship.WATER) {
-          this.set_square(r,c,Battleship.BOAT);
+          this.set_square_state(r,c,Battleship.BOAT);
         }
         else {
-          this.set_square(r,c,Battleship.WATER);
+          this.set_square_state(r,c,Battleship.WATER);
         }
+        
+        // this.set_square_state(r,c,this.data_board[r][c]);
       };
     };
   }
@@ -229,6 +252,10 @@ $(document).ready(function() {
     var square_contents = this.snapshot === null ? null : this.snapshot.child('board/'+row+'/'+col).val();
     return square_contents || Battleship.WATER;
   }
+  Battleship.Board.prototype.get_ship_state = function (ship_name) {
+    var ship_data = this.snapshot === null ? null : this.snapshot.child('ships/'+ship_name).val();
+    return ship_data || -1;
+  }
 
   Battleship.Board.get_position = function (mousex,mousey) {
     var r = Math.floor(mousey/Battleship.SQUARE_SIZE_PIXELS);
@@ -236,41 +263,110 @@ $(document).ready(function() {
     return {row:r,col:c};
   }
 
-  Battleship.Board.prototype.is_boat_sunk = function (name,row,col) {
-    /*
+  /*
+  Battleship.Board.prototype.is_boat_sunk = function (ship_name,row,col) {
+    
     var boat_size;
     for (var i = 0; i < Battleship.SHIPS.length; i++) {
-      if (Battleship.SHIPS[i].name == name) { 
+      if (Battleship.SHIPS[i].ship_name == ship_name) { 
         boat_size = Battleship.SHIPS[i].size;
         break;
       }
     };
-    */
+    
+    var ship_data = this.get_ship_state(ship_name);
+    console.log('checking if ship sunk')
+    for (var i = 0; i < ship_data.ship_size; i++) {
+      if (ship_data.horizontal&&this.get_square_state(row,col+i)!=Battleship.HIT) {
+        return false;
+      }
+      else if (!ship_data.horizontal&&this.get_square_state(row+i,col)!=Battleship.HIT) {
+        return false;        
+      }
 
-    for (var r = 0; r < Battleship.BOARD_HEIGHT; r++) {
-      for (var c = 0; c < Battleship.BOARD_WIDTH; c++) {
-        if (this.data_board[r][c] == name) {
-          if (this.get_square_state(r,c) != Battleship.HIT) {
-            return false;
-          }
-        }
-      };
+
+      // for (var c = 0; c < Battleship.BOARD_WIDTH; c++) {
+      //   if (this.data_board[r][c] == ship_name) {
+      //     if (this.get_square_state(r,c) != Battleship.HIT) {
+      //       return false;
+      //     }
+      //   }
+      // };
     };
     return true;
+  }
+*/
+  function check_pos_ship_intersect(ship_data,row,col) {
+    if (ship_data.horizontal) {
+      if (ship_data.row != row) {return false;}
+      return ship_data.col<=col && ship_data.col+ship_data.ship_size>=col;
+    }
+    else {
+      if (ship_data.col != col) {return false;}
+      return ship_data.row<=row && ship_data.row+ship_data.ship_size>=row;     
+    }
+    return -1;
+  }
+  Battleship.Board.prototype.get_ship_from_pos = function(row,col) {
+    var ship_data;
+    for (var i = 0; i < Battleship.SHIPS.length; i++) {
+      ship_data = this.get_ship_state(Battleship.SHIPS[i].name);
+      if (check_pos_ship_intersect(ship_data,row,col)) {
+        return ship_data;
+      }
+    };
+    return -1;
+  }
+  Battleship.Board.prototype.check_if_ship_sank = function (row,col) {
+    var ship_data = this.get_ship_from_pos(row,col);
+    if (ship_data == -1) {
+      alert('BOOBOO: :[ Line 324');
+    }
+    var sq_state;
+    for (var i = 0; i < ship_data.ship_size; i++) {
+      if (ship_data.horizontal) {        
+        sq_state = this.get_square_state(ship_data.row,ship_data.col+i);
+      }
+      else {        
+        sq_state = this.get_square_state(ship_data.row+i,ship_data.col);
+      }
+
+      if (sq_state != Battleship.HIT) {
+        return false;
+      }
+    };
+
+    return ship_data;
+  }
+
+  Battleship.Board.prototype.sink_the_ship = function (ship_data) {
+    var r=ship_data.row;
+    var c=ship_data.col;
+    for (var i = 0; i < ship_data.ship_size; i++) {
+      if (ship_data.horizontal) {        
+        this.set_square_state(r,c+i,Battleship.SUNK); 
+      }  
+      else {        
+        this.set_square_state(r+i,c,Battleship.SUNK); 
+      } 
+    };
   }
 
   Battleship.Board.prototype.make_guess = function (row,col) {
     var state = this.get_square_state(row,col);
     if (state == Battleship.BOAT) {
-      this.set_square(row,col,Battleship.HIT);
-      var boat_name = this.data_board[row][col];
-      if (this.is_boat_sunk(boat_name,row,col)) {
+      this.set_square_state(row,col,Battleship.HIT);
+      var ship_sank = this.check_if_ship_sank(row,col)
+      if (ship_sank) {
         // boat is sunk
-        alert('you sunk '+boat_name);
+        alert('you sunk '+ship_sank.name);
+        this.sink_the_ship(ship_sank)
+        // TODO: display sunken boat
+        // TODO: check if gameover
       }
     }
     if (state == Battleship.WATER) {
-      this.set_square(row,col,Battleship.MISS);
+      this.set_square_state(row,col,Battleship.MISS);
     }
     return state;
   }
@@ -281,7 +377,7 @@ $(document).ready(function() {
       st = '';
       for (var c = 0; c < Battleship.BOARD_WIDTH; c++) {
         state = this.get_square_state(r,c);
-        if (state==Battleship.BOAT) {
+        if (state == Battleship.BOAT) {
           st += 'B ';
         }
         else if (state==Battleship.WATER) {
@@ -290,6 +386,24 @@ $(document).ready(function() {
       };
       console.log(st)
     };
+  }
+  Battleship.Board.prototype.print_board2 = function() {
+    var st,state;
+    st = '-----\n';
+    for (var r = 0; r < Battleship.BOARD_HEIGHT; r++) {
+      for (var c = 0; c < Battleship.BOARD_WIDTH; c++) {
+        state = this.data_board[r][c];
+        if (state===Battleship.WATER) {
+          st += '- ';          
+        }
+        else {
+          st += state[0] + ' ';
+        }
+      };
+      st += '\n';
+    };
+    console.log(st);
+    console.log('-----');
   }
 /* =========================================================
                         CONTROLLER
@@ -449,6 +563,7 @@ $(document).ready(function() {
         // TODO: [ ] inform user that's their board
         return;
       }
+
       self.battleship_ref.child('player_turn').once('value',function (snapshot) {
         if (snapshot.val() == self.my_num) { 
           var pos = Battleship.Board.get_position(evt.offsetX,evt.offsetY);
@@ -599,7 +714,7 @@ $(document).ready(function() {
 
 
   Battleship.Controller.prototype.resetMyBoardAndPiece = function () {
-    this.my_board.clear();
+    this.my_board.clear_board();
     var newPiece = new Battleship.Piece();
     newPiece.writeToFirebase(this.my_player_ref.child('piece'));
   }; 

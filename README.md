@@ -16,6 +16,7 @@ todo:
   [ ] display boat sinking
   [x] game rooms
   [ ] flagging (like minesweeper)
+  [ ] BUG: figure out why printboard != board displayed
 
 
 
