@@ -53,6 +53,7 @@ $(document).ready(function() {
   Battleship.Board = function (canvas, player_ref) {
     this.context = canvas.getContext('2d');
     this.player_ref = player_ref;
+    this.gameroom_ref = player_ref.parent().parent();
     this.snapshot = null;
     this.is_my_board = false;
     this.create_random_board();
@@ -368,12 +369,15 @@ $(document).ready(function() {
     if (state == Battleship.BOAT) {
       this.set_square_state(row,col,Battleship.HIT);
       var ship_sank = this.check_if_ship_sank(row,col)
-      if (ship_sank) {
+      // if (ship_sank) {
+      if (true) {
         // boat is sunk
-        alert('you sunk '+ship_sank.name);
-        this.sink_the_ship(ship_sank)
-        if (this.check_if_game_over()) {
+        // alert('you sunk '+ship_sank.name);
+        // this.sink_the_ship(ship_sank)
+        // if (this.check_if_game_over()) {
+        if (true) {
           alert('gameover')
+          this.gameroom_ref.child('gameover').set(true);
         }
       }
     }
@@ -703,14 +707,14 @@ $(document).ready(function() {
 
   //// Detect when our opponent restarts the game.
   Battleship.Controller.prototype.watch_for_restart = function () {
-    var self = this;
-    var restart_ref = this.my_player_ref.child('restart');
-    restart_ref.on('value', function(snap) {
-      if (snap.val() === 1) {
-        restart_ref.set(0);
-        self.resetMyBoardAndPiece();
-      }
-    });
+    // var self = this;
+    // var restart_ref = this.my_player_ref.child('restart');
+    // restart_ref.on('value', function(snap) {
+    //   if (snap.val() === 1) {
+    //     restart_ref.set(0);
+    //     self.reset_my_board();
+    //   }
+    // });
   };
 
 
@@ -721,14 +725,13 @@ $(document).ready(function() {
 
   Battleship.Controller.prototype.restart_game = function () {
     this.opponent_player_ref.child('restart').set(1);
-    this.resetMyBoardAndPiece();
+    this.reset_my_board();
+    this.gameroom_ref.child('gameover').set(false);
   };
 
 
-  Battleship.Controller.prototype.resetMyBoardAndPiece = function () {
-    this.my_board.clear_board();
-    var newPiece = new Battleship.Piece();
-    newPiece.writeToFirebase(this.my_player_ref.child('piece'));
+  Battleship.Controller.prototype.reset_my_board = function () {
+    this.my_board.create_random_board();
   }; 
   
 });

@@ -1,27 +1,43 @@
 Battleship
-todo:
-  [ ] Clicking
+features:
+  [x] Clicking
     [ ] figure out which board we're guessing from
     [ ] ensure guessing is what we're trying to do
     [ ] special case: clicking on already clicked tiles
     [ ] not clicking your own board
-  [ ] Game over
+  [x] Game over
     [x] check when it happens
-    [ ] alert both players when it happens
-    [ ] ask players if theyd like to play again
-    [ ] if not, take back to lobby
-    [ ] if so, restart the game
-  [ ] Player Made Boards
+    [x] alert both players when it happens
+    [x] ask players if theyd like to play again
+    [x] if not, take back to lobby
+    [x] if not, alert the other player
+    [x] if so, restart the game (only if both players agree)
   [x] fix board collision
-  [/] hiding the other player's board
+  [x] hiding the other player's board
   [x] taking turns
   [x] BUG: when making guess, it seems to believe the boards switched
   [x] when boat is sunk, show that
       [x] determine when boat is sunken
   [x] display boat sinking
   [x] game rooms
-  [ ] flagging (like minesweeper)
   [x] BUG: figure out why printboard != board displayed
+  [ ] auto-match (in gameroom) (MED)
+      [ ] create html element
+      [ ] set up auto-matching process
+  [ ] users+passwords, keeping stats (LOW)
+      [ ] option to create account (vs. guest)
+      [ ] create html form for creating account
+      [ ] create html form for logging in
+      [ ] saving this user in fb
+      [ ] reset passwords?
+      [ ] email
+      [ ] keeping win record
+  [ ] Player Made Boards (LOW)
+  [ ] flagging (like minesweeper) (HIGH)
+
+Polish:
+  [ ] gameover
+    [ ] smooth out the kinks
 
 
 

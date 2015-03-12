@@ -189,6 +189,7 @@ $(document).ready(function() {
     var gameroom_key = game_rooms_ref.push({'timestamp':Firebase.ServerValue.TIMESTAMP}).key();
     game_rooms_ref.child(gameroom_key).child('user_list').child(PLACEHOLDER_FLAG).set('');
     game_rooms_ref.child(gameroom_key).child('chatlog').set('');
+    game_rooms_ref.child(gameroom_key).child('gameover').set(false);
     for (var i = 0; i < user_list.length; i++) {
       all_users_ref.child(user_list[i].id).child('status').set('invited');
       all_users_ref.child(user_list[i].id).child('gameroom_key').set(gameroom_key);
@@ -228,6 +229,15 @@ $(document).ready(function() {
 
   function join_game() {
     var my_gameroom_ref = get_my_gameroom_ref();
+    my_gameroom_ref.child('player_left').set(false);
+    // see if this has been removed (by other player rejecting to replay)
+    my_gameroom_ref.child('player_left').on('value',function (snap) {
+      if (snap.val() == true) {
+        alert('other player rejected replay');
+        leave_game_room();
+        my_gameroom_ref.remove();
+      }
+    });
 
     my_gameroom_ref.child('user_list').child(my_data.id).set({'time_entered':'now'});
     open_page($PAGE_GAMEROOM);
@@ -259,6 +269,13 @@ $(document).ready(function() {
     my_gameroom_ref.child('chatlog').on('child_added', function (snapshot) {
       add_msg_to_chatlog(snapshot);
     });
+
+    my_gameroom_ref.child('gameover').on('value',function (snapshot) {
+      if (snapshot.val() == true) {
+        // end the game
+        $('#md-replay').removeClass('hidden');
+      }
+    });
   }
 
   function alert_invite_rejection(my_gameroom_ref) {
@@ -278,10 +295,15 @@ $(document).ready(function() {
   });
 
   $('#exit_gameroom_btn').click(function() {
-    var my_gameroom_ref = get_my_gameroom_ref();
-    my_gameroom_ref.child('user_list').child(my_data.id).remove();
-    all_users_ref.child(my_data.id).child('status').set('lobby');
-    open_page($PAGE_LOBBY);
+    leave_game_room();
+  });
+
+  $('#accept_replay_btn').click(function () {        
+    battleship_controller.restart_game();
+  });
+
+  $('#reject_replay_btn').click(function () {
+    leave_game_room();
   });
 
   $('#send_msg_btn').click(function () {
@@ -301,7 +323,7 @@ $(document).ready(function() {
   });
 
   function open_page($page_to_open) {
-    $('.page').addClass('hidden');
+    $('.page, .page .md').addClass('hidden');
     $page_to_open.removeClass('hidden');
   }
 
@@ -314,6 +336,15 @@ $(document).ready(function() {
     var gameroom_key;
     my_user_ref.once('value',function(snapshot) { gameroom_key = snapshot.val()['gameroom_key']; });
     return game_rooms_ref.child(gameroom_key);
+  }
+
+  function leave_game_room() {
+    var my_gameroom_ref = get_my_gameroom_ref();
+    my_gameroom_ref.child('user_list').child(my_data.id).remove();
+    my_gameroom_ref.child('player_left').set(true);
+    all_users_ref.child(my_data.id).child('status').set('lobby');
+    all_users_ref.child(my_data.id).child('gameroom_key').set(null);
+    open_page($PAGE_LOBBY);    
   }
 
 })
