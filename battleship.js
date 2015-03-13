@@ -76,6 +76,27 @@ $(document).ready(function() {
      displaying 
     ------------*/
 
+  Battleship.Board.prototype.draw_hit = function (left,top) {
+    this.context.fillStyle = 'red';
+  };
+  Battleship.Board.prototype.draw_miss = function (left,top) {
+    this.context.fillStyle = 'green';
+  };
+  Battleship.Board.prototype.draw_fog = function (left,top) {
+    this.context.fillStyle = 'rgb(50,50,50)';
+  };
+  Battleship.Board.prototype.draw_flag = function (left,top) {
+    this.context.fillStyle = 'pink';
+  };
+  Battleship.Board.prototype.draw_boat = function (left,top) {
+    this.context.fillStyle = 'yellow';
+  };
+  Battleship.Board.prototype.draw_water = function (left,top) {
+    this.context.fillStyle = 'blue';
+  };
+  Battleship.Board.prototype.draw_sink = function (left,top) {
+    this.context.fillStyle = 'black';
+  };
   Battleship.Board.prototype.draw_my_board = function () {
     // Iterate over columns / rows in board data and draw each non-empty block.
     var square_state,left,top
@@ -87,19 +108,19 @@ $(document).ready(function() {
         this.context.lineWidth = 1;
         this.context.strokeStyle = Battleship.BLOCK_BORDER_COLOR;
         if (square_state == Battleship.BOAT || square_state == Battleship.FLAG_B) {
-          this.context.fillStyle = 'yellow';
+          this.draw_boat(left,top);
         }
         else if (square_state == Battleship.WATER || square_state == Battleship.FLAG_W) {
-          this.context.fillStyle = 'blue';
+          this.draw_water(left,top);
         }
         else if (square_state == Battleship.HIT) {
-          this.context.fillStyle = 'red';
+          this.draw_hit(left,top);
         }
-        else if (square_state == Battleship.MISS) {          
-          this.context.fillStyle = 'green';
+        else if (square_state == Battleship.MISS) {    
+          this.draw_miss(left,top);
         }
-        else if (square_state == Battleship.SUNK) {          
-          this.context.fillStyle = 'black';
+        else if (square_state == Battleship.SUNK) {  
+          this.draw_sink(left,top);
         }
         this.context.fillRect(left, top, Battleship.SQUARE_SIZE_PIXELS, Battleship.SQUARE_SIZE_PIXELS);
         this.context.strokeRect(left, top, Battleship.SQUARE_SIZE_PIXELS, Battleship.SQUARE_SIZE_PIXELS);
@@ -119,19 +140,19 @@ $(document).ready(function() {
         this.context.strokeStyle = 'white';
         // this is an unknown square
         if (square_state == Battleship.BOAT||square_state == Battleship.WATER) {
-          this.context.fillStyle = 'rgb(50,50,50)';
+          this.draw_fog(left,top);
         }
         else if (square_state == Battleship.HIT) {
-          this.context.fillStyle = 'red';
+          this.draw_hit(left,top);
         }
-        else if (square_state == Battleship.MISS) {          
-          this.context.fillStyle = 'green';
+        else if (square_state == Battleship.MISS) {
+          this.draw_miss(left,top);
         }
-        else if (square_state == Battleship.SUNK) {          
-          this.context.fillStyle = 'black';
+        else if (square_state == Battleship.SUNK) {      
+          this.draw_sink(left,top);
         }
-        else if (square_state == Battleship.FLAG_W || square_state == Battleship.FLAG_B) {          
-          this.context.fillStyle = 'pink';
+        else if (square_state == Battleship.FLAG_W || square_state == Battleship.FLAG_B) { 
+          this.draw_flag(left,top);
         }
         this.context.fillRect(left, top, Battleship.SQUARE_SIZE_PIXELS, Battleship.SQUARE_SIZE_PIXELS);
         this.context.strokeRect(left, top, Battleship.SQUARE_SIZE_PIXELS, Battleship.SQUARE_SIZE_PIXELS);
