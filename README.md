@@ -39,6 +39,7 @@ features:
   [ ] keeping score for one gameroom
 
   Variations:
+    [ ] html for choosing these variations
     [ ] don't alert a ship has been sunk
     [ ] different number of 'guesses' per round
         [ ] 1 for remaining ships
