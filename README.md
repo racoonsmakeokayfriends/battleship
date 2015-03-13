@@ -24,7 +24,7 @@ features:
   [ ] auto-match (in gameroom) (MED)
       [ ] create html element
       [ ] set up auto-matching process
-  [ ] users+passwords, keeping stats (LOW)
+  [ ] users+passwords, keeping stats (LOW, kind of unnessecary and tons of work)
       [ ] option to create account (vs. guest)
       [ ] create html form for creating account
       [ ] create html form for logging in
@@ -33,13 +33,30 @@ features:
       [ ] email
       [ ] keeping win record
   [ ] Player Made Boards (LOW)
-  [ ] flagging (like minesweeper) (HIGH)
-      [ ] making flags
-      [ ] unflagging flags
+  [x] flagging (like minesweeper) (HIGH)
+      [x] making flags
+      [x] unflagging flags
+  [ ] keeping score for one gameroom
+
+  Variations:
+    [ ] don't alert a ship has been sunk
+    [ ] different number of 'guesses' per round
+        [ ] 1 for remaining ships
+        [ ] 1 for the size of the largest remaining ship
+        [ ] A slightly different version of the game is played in India. Instead of announcing whether a shot is a hit or miss immediately, the players simply say how many of their opponent's three shots were hits, and if so on what kind of vessel. This allows for more strategy in game play and loosens the game's dependency on luck. A slightly different recording system is used in this variation as there is a new importance on what turn a player hit something on. The ships themselves are also slightly different: the Indian version uses two submarines (two spaces), two destroyers (three spaces), one battleship (five spaces), and one aircraft carrier (five spaces arranged in a 'T')
 
 Polish:
   [ ] gameover
-    [ ] smooth out the kinks
+      [ ] smooth out the kinks
+  [ ] instructions
+      [ ] shift-click flags
+  [ ] playability
+      [ ] when player clicks, if say they clicked on a HIT/MISS, dont change the turn
+  [ ] alerting
+      [ ] when player clicks their own board
+      [ ] when a ship has been sunk
+  [ ] working out player leaving scenarios
+  [ ] work on graphics for board
 
 
 

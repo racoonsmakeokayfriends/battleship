@@ -464,16 +464,6 @@ $(document).ready(function() {
   };
 
 
-  function inform_turn_info(is_my_turn) {
-    if (is_my_turn) {        
-      $('#turn-info').text('your turn!')
-    }
-    else {       
-      $('#turn-info').text('other player\'s turn!')
-    }
-  }
-
-
   //// Once we've joined, enable controlling our player.
   Battleship.Controller.prototype.start_playing = function (player_num) {
     this.my_player_ref = this.battleship_ref.child('player' + player_num);
@@ -487,7 +477,9 @@ $(document).ready(function() {
 
     // Clear my_player_ref 'online' status when we disconnect so somebody else can join.
     this.my_player_ref.child('online').onDisconnect().remove();
+
     var self = this;
+    // inform the player whose turn it is
     this.battleship_ref.child('player_turn').on('value',function (snapshot) {
       inform_turn_info(snapshot.val() == self.my_num);
     })
@@ -496,31 +488,28 @@ $(document).ready(function() {
   };
 
 
-
-
   //// Sets up handlers for all mouse commands.   
   Battleship.Controller.prototype.enable_mouse = function () {
     var self = this;
     $(document).on('click','canvas',function (evt) {
+      // CLICKING ON OWN BOARD
       if ($(this).attr('data')==self.my_num) {
-        // TODO: [ ] inform user that's their board
+        // TODO: inform user that's their board
         return;
       }
 
       var pos = Battleship.Board.get_position(evt.offsetX,evt.offsetY);
 
-      // flag this square
+      // FLAGGING
       if (evt.shiftKey) {
-        console.log('----flagging!---'+self.my_num);
         self.boards[1-self.my_num].flag_square(pos.row,pos.col);
         return;
       }
 
+      // MAKING A GUESS
       self.battleship_ref.child('player_turn').once('value',function (snapshot) {
         if (snapshot.val() == self.my_num) { 
-          // TODO: 
-          // [ ] ensure guessing is what we're trying to do
-          // [ ] special case: clicking on already clicked tiles
+          // TODO:if this guess doesn't change anything, dont change the player turn
           var state = self.boards[1-self.my_num].make_guess(pos.row,pos.col);
           self.battleship_ref.child('player_turn').set(1-snapshot.val());
         }
@@ -548,153 +537,169 @@ $(document).ready(function() {
 
 
 
+/* =========================================================
+                          INTERFACE
+   ========================================================= */
 
 
-
-
-
-  Battleship.Controller.prototype.wait_to_join = function() {
-    var self = this;
-
-    // Listen on 'online' location for player0 and player1.
-    // this.battleship_ref.child('player0/online').on('value', function(online_snap) {
-    //   if (online_snap.val() === null && self.playing_state === Battleship.PLAYING_STATE.Watching) {
-    //     self.try_to_join(0);
-    //   }
-    // });
-
-    // this.battleship_ref.child('player1/online').on('value', function(online_snap) {
-    //   if (online_snap.val() === null && self.playing_state === Battleship.PLAYING_STATE.Watching) {
-    //     self.try_to_join(1);
-    //   }
-    // });
-
-    this.battleship_ref.child('player0/online').once('value', function(online_snap) {
-      if (online_snap.val() === null) {
-        self.try_to_join(0);
-        return;
-      }
-    });
-
-    this.battleship_ref.child('player1/online').once('value', function(online_snap) {
-      if (online_snap.val() === null) {
-        self.try_to_join(1);
-      }
-    });
-
-    console.log('idk');
-  };
-
-  //// Try to join the game as the specified player_num.
-  Battleship.Controller.prototype.try_to_join = function(player_num) {
-    // Set ourselves as joining to make sure we don't try to join as both players. :-)
-    this.playing_state = Battleship.PLAYING_STATE.Joining;
-
-    // Use a transaction to make sure we don't conflict with other people trying to join.
-    var self = this;
-    this.battleship_ref.child('player' + player_num + '/online').transaction(function(online_val) {
-      if (online_val === null) {
-        return true; // Try to set online to true.
-      } else {
-        return; // Somebody must have beat us.  Abort the transaction.
-      }
-    }, function(error, committed) {
-      if (committed) { // We got in!
-        self.playing_state = Battleship.PLAYING_STATE.Playing;
-      } else {
-        self.playing_state = Battleship.PLAYING_STATE.Watching;
-      }
-    });
-  };
-  
-  //// Sets a timer to make the piece repeatedly drop after GRAVITY_DELAY ms.
-  Battleship.Controller.prototype.reset_gravity = function () {
-    // If there's a timer already active, clear it first.
-    if (this.gravityIntervalId !== null) {
-      clearInterval(this.gravityIntervalId);
+  function inform_turn_info(is_my_turn) {
+    if (is_my_turn) {        
+      $('#turn-info').text('your turn!')
     }
-
-    var self = this;
-    this.gravityIntervalId = setInterval(function() {
-      self.doGravity();
-    }, Battleship.GRAVITY_DELAY);
-  };
-
-
-  Battleship.Controller.prototype.doGravity = function () {
-    if (this.fallingPiece === null)
-      return; // piece isn't initialized yet.
-
-    var newPiece = this.fallingPiece.drop();
-
-    // If we've hit the bottom, add the (pre-drop) piece to the board and create a new piece.
-    if (this.myBoard.checkForPieceCollision(newPiece)) {
-      this.myBoard.addLandedPiece(this.fallingPiece);
-
-      // Check for completed lines and if appropriate, push extra rows to our opponent.
-      var completedRows = this.myBoard.removeCompletedRows();
-      var rowsToPush = (completedRows === 4) ? 4 : completedRows - 1;
-      if (rowsToPush > 0)
-        this.opponentPlayerRef.child('extrarows').push(rowsToPush);
-
-      // Create new piece (it'll be initialized to a random piece at the top of the screen).
-      newPiece = new Battleship.Piece();
-
-      // Is the board full?
-      if (this.myBoard.checkForPieceCollision(newPiece))
-        this.gameOver();
+    else {       
+      $('#turn-info').text('other player\'s turn!')
     }
+  }
 
-    newPiece.writeToFirebase(this.myPlayerRef.child('piece'));
-  };
+/* =========================================================
+                    RANDOM EXAMPLE FUNCS
+   ========================================================= */
 
+  /*
+    Battleship.Controller.prototype.wait_to_join = function() {
+      var self = this;
 
-  //// Detect when our opponent pushes extra rows to us.
-  Battleship.Controller.prototype.watch_for_extra_rows = function () {
-    var self = this;
-    var extraRowsRef = this.myPlayerRef.child('extrarows');
-    extraRowsRef.on('child_added', function(snapshot) {
-      var rows = snapshot.val();
-      extraRowsRef.child(snapshot.key()).remove();
+      // Listen on 'online' location for player0 and player1.
+      // this.battleship_ref.child('player0/online').on('value', function(online_snap) {
+      //   if (online_snap.val() === null && self.playing_state === Battleship.PLAYING_STATE.Watching) {
+      //     self.try_to_join(0);
+      //   }
+      // });
 
-      var overflow = self.myBoard.addJunkRows(rows);
-      if (overflow)
-        self.gameOver();
+      // this.battleship_ref.child('player1/online').on('value', function(online_snap) {
+      //   if (online_snap.val() === null && self.playing_state === Battleship.PLAYING_STATE.Watching) {
+      //     self.try_to_join(1);
+      //   }
+      // });
 
-      // Also move piece up to avoid collisions.
-      if (self.fallingPiece) {
-        self.fallingPiece.y -= rows;
-        self.fallingPiece.writeToFirebase(self.myPlayerRef.child('piece'));
+      this.battleship_ref.child('player0/online').once('value', function(online_snap) {
+        if (online_snap.val() === null) {
+          self.try_to_join(0);
+          return;
+        }
+      });
+
+      this.battleship_ref.child('player1/online').once('value', function(online_snap) {
+        if (online_snap.val() === null) {
+          self.try_to_join(1);
+        }
+      });
+
+      console.log('idk');
+    };
+
+    //// Try to join the game as the specified player_num.
+    Battleship.Controller.prototype.try_to_join = function(player_num) {
+      // Set ourselves as joining to make sure we don't try to join as both players. :-)
+      this.playing_state = Battleship.PLAYING_STATE.Joining;
+
+      // Use a transaction to make sure we don't conflict with other people trying to join.
+      var self = this;
+      this.battleship_ref.child('player' + player_num + '/online').transaction(function(online_val) {
+        if (online_val === null) {
+          return true; // Try to set online to true.
+        } else {
+          return; // Somebody must have beat us.  Abort the transaction.
+        }
+      }, function(error, committed) {
+        if (committed) { // We got in!
+          self.playing_state = Battleship.PLAYING_STATE.Playing;
+        } else {
+          self.playing_state = Battleship.PLAYING_STATE.Watching;
+        }
+      });
+    };
+    
+    //// Sets a timer to make the piece repeatedly drop after GRAVITY_DELAY ms.
+    Battleship.Controller.prototype.reset_gravity = function () {
+      // If there's a timer already active, clear it first.
+      if (this.gravityIntervalId !== null) {
+        clearInterval(this.gravityIntervalId);
       }
-    });
-  };
+
+      var self = this;
+      this.gravityIntervalId = setInterval(function() {
+        self.doGravity();
+      }, Battleship.GRAVITY_DELAY);
+    };
 
 
-  //// Detect when our opponent restarts the game.
-  Battleship.Controller.prototype.watch_for_restart = function () {
-    // var self = this;
-    // var restart_ref = this.my_player_ref.child('restart');
-    // restart_ref.on('value', function(snap) {
-    //   if (snap.val() === 1) {
-    //     restart_ref.set(0);
-    //     self.reset_my_board();
-    //   }
-    // });
-  };
-  Battleship.Controller.prototype.initialize_piece = function() {
-    this.fallingPiece = null;
-    var pieceRef = this.myPlayerRef.child('piece');
-    var self = this;
+    Battleship.Controller.prototype.doGravity = function () {
+      if (this.fallingPiece === null)
+        return; // piece isn't initialized yet.
 
-    // Watch for changes to the current piece (and initialize it if it's null).
-    pieceRef.on('value', function(snapshot) {
-      if (snapshot.val() === null) {
-        var newPiece = new Battleship.Piece();
-        newPiece.writeToFirebase(pieceRef);
-      } else {
-        self.fallingPiece = Battleship.Piece.fromSnapshot(snapshot);
+      var newPiece = this.fallingPiece.drop();
+
+      // If we've hit the bottom, add the (pre-drop) piece to the board and create a new piece.
+      if (this.myBoard.checkForPieceCollision(newPiece)) {
+        this.myBoard.addLandedPiece(this.fallingPiece);
+
+        // Check for completed lines and if appropriate, push extra rows to our opponent.
+        var completedRows = this.myBoard.removeCompletedRows();
+        var rowsToPush = (completedRows === 4) ? 4 : completedRows - 1;
+        if (rowsToPush > 0)
+          this.opponentPlayerRef.child('extrarows').push(rowsToPush);
+
+        // Create new piece (it'll be initialized to a random piece at the top of the screen).
+        newPiece = new Battleship.Piece();
+
+        // Is the board full?
+        if (this.myBoard.checkForPieceCollision(newPiece))
+          this.gameOver();
       }
-    });
-  };
+
+      newPiece.writeToFirebase(this.myPlayerRef.child('piece'));
+    };
+
+
+    //// Detect when our opponent pushes extra rows to us.
+    Battleship.Controller.prototype.watch_for_extra_rows = function () {
+      var self = this;
+      var extraRowsRef = this.myPlayerRef.child('extrarows');
+      extraRowsRef.on('child_added', function(snapshot) {
+        var rows = snapshot.val();
+        extraRowsRef.child(snapshot.key()).remove();
+
+        var overflow = self.myBoard.addJunkRows(rows);
+        if (overflow)
+          self.gameOver();
+
+        // Also move piece up to avoid collisions.
+        if (self.fallingPiece) {
+          self.fallingPiece.y -= rows;
+          self.fallingPiece.writeToFirebase(self.myPlayerRef.child('piece'));
+        }
+      });
+    };
+
+
+    //// Detect when our opponent restarts the game.
+    Battleship.Controller.prototype.watch_for_restart = function () {
+      // var self = this;
+      // var restart_ref = this.my_player_ref.child('restart');
+      // restart_ref.on('value', function(snap) {
+      //   if (snap.val() === 1) {
+      //     restart_ref.set(0);
+      //     self.reset_my_board();
+      //   }
+      // });
+    };
+    Battleship.Controller.prototype.initialize_piece = function() {
+      this.fallingPiece = null;
+      var pieceRef = this.myPlayerRef.child('piece');
+      var self = this;
+
+      // Watch for changes to the current piece (and initialize it if it's null).
+      pieceRef.on('value', function(snapshot) {
+        if (snapshot.val() === null) {
+          var newPiece = new Battleship.Piece();
+          newPiece.writeToFirebase(pieceRef);
+        } else {
+          self.fallingPiece = Battleship.Piece.fromSnapshot(snapshot);
+        }
+      });
+    };
+
+  */
   
 });
