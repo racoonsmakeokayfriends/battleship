@@ -34,6 +34,8 @@ features:
       [ ] keeping win record
   [ ] Player Made Boards (LOW)
   [ ] flagging (like minesweeper) (HIGH)
+      [ ] making flags
+      [ ] unflagging flags
 
 Polish:
   [ ] gameover

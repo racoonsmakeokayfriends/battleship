@@ -223,6 +223,7 @@ $(document).ready(function() {
   }
 
   function start_game() {
+    console.log('-- start game --');
     var battleship_ref = get_my_gameroom_ref();
     battleship_controller = new Battleship.Controller(battleship_ref,my_data.id);
   }
@@ -238,9 +239,11 @@ $(document).ready(function() {
         my_gameroom_ref.remove();
       }
     });
-
+    // todo: change 'now' to timestamp
     my_gameroom_ref.child('user_list').child(my_data.id).set({'time_entered':'now'});
     open_page($PAGE_GAMEROOM);
+    
+    var onlycallonce_hack = true;
 
     my_gameroom_ref.child('user_list').on('child_added', function (snapshot) {
       if (get_user_id(snapshot) == PLACEHOLDER_FLAG) return;
@@ -248,10 +251,13 @@ $(document).ready(function() {
       // todo: check if the right number of players are here
       my_gameroom_ref.child('user_list').once('value',function(s) {
         // NOTE: edit this to reflect when we're ready to play
-        // NOTE: the -1 is for that stupid placeholder 
-        if (s.numChildren()-1 == NUM_USERS) {
+        // NOTE: the -1 is for that stupid placeholder
+        if (s.numChildren()-1 == NUM_USERS&&onlycallonce_hack) {
           start_game();
+          onlycallonce_hack = false;
         }
+
+        
       });
     }); 
 
