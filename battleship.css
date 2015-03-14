@@ -265,3 +265,41 @@ canvas {
   width: 250px;
   background-color: violet;
 }
+.message {
+  background-color: #d2d5da;
+  border: 1px solid #bcc0c7;
+  border-radius: 5px;
+  height: 4em;
+}
+
+.message.warning {
+  background-color: #d2d5da;
+  border: 1px solid #bcc0c7;
+}
+
+.btn {
+  cursor: pointer;
+}
+
+.message .sym {
+  font-size: 3em;
+  float: left;
+  padding: 0.16em;
+}
+
+.message .content {
+  float: left;
+}
+
+.message .heading {
+  margin: 0.5em 0px 0px 0.5em;
+}
+
+.message .text {
+  margin: 0px 0px 0px 0.5em;
+}
+
+.message .close {
+  float: right;
+  margin: 0.5em;
+}

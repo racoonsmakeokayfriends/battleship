@@ -17,6 +17,8 @@ $(document).ready(function() {
 /* =========================================================
                       USER INTERACTIONS
    ========================================================= */
+   $MSG_CLICK_OWN_BOARD = $('#msg-click-own-board');
+   $MSG_SHIP_SUNK = $('#msg-ship-sunk');
 
 /* =========================================================
                 CONFIG, CONSTANTS, + GLOBALS
@@ -83,7 +85,8 @@ $(document).ready(function() {
   Battleship.Board.prototype.alert_ship_sunk = function(ship_name) {
     if (!Battleship.GameOptions.ship_sink_alert_on) {return;}
 
-    alert(ship_name+' has been sunk!');
+    $MSG_SHIP_SUNK.find('.text').html(ship_name+' has been sunk!');
+    $MSG_SHIP_SUNK.fadeIn();
   }
   Battleship.Board.prototype.draw_hit = function (left,top) {
     this.context.fillStyle = 'red';
@@ -535,7 +538,7 @@ $(document).ready(function() {
     $(document).on('click','canvas',function (evt) {
       // CLICKING ON OWN BOARD
       if ($(this).attr('data')==self.my_num) {
-        // TODO: inform user that's their board
+        $MSG_CLICK_OWN_BOARD.fadeIn();
         return;
       }
 

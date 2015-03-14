@@ -59,6 +59,10 @@ $(document).ready(function() {
   var $MSG_FIELD = $('#msg_field');
   var $GAMEROOM_CHATLOG = $('#game_chatlog');
 
+  var $MSG_INVITE_TOO_MANY = $('#msg-invite-too-many');
+  var $MSG_USERNAME_EMPTY = $('#msg-username-empty');
+  var $MSG_USERNAME_TAKEN = $('#msg-username-taken');
+
   // Some globals for this user
   var my_name = 'noone';
   var my_data = {id:'',name:'',status:''};
@@ -73,6 +77,7 @@ $(document).ready(function() {
   $SIGNIN_BTN_ENTER_LOBBY.click(function () {
     if ($SIGNIN_FIELD_USERNAME.val() == '') {
       $SIGNIN_MESSAGE.text('You must specify a username');
+      $MSG_USERNAME_EMPTY.fadeIn();
       return;
     }
     var username = $SIGNIN_FIELD_USERNAME.val();
@@ -94,6 +99,7 @@ $(document).ready(function() {
   function user_created(username,success) {
     if (!success) {
       $SIGNIN_MESSAGE.text('That username is taken by another user, please choose another.');
+      $MSG_USERNAME_TAKEN.fadeIn();
       open_page($PAGE_SIGNIN);
       my_name = '';
       return;
@@ -134,7 +140,7 @@ $(document).ready(function() {
   $PROPOSE_GAME_CLASSIC_BTN.click(function () {
     // check that no more than X users are chosen
     if ($LOBBY_LIST_USERS.children('li.user.selected').length > MAX_USERS) {
-      // TODO
+      $MSG_INVITE_TOO_MANY.fadeIn();
       return;
     }
 
@@ -458,7 +464,11 @@ $(document).ready(function() {
    ========================================================= */
 
   $('.md .md-close').click(function() {
-    $(this).parents('.md').addClass('hidden');
+    $(this).closest('.md').addClass('hidden');
+  });
+
+  $('.message .close.btn').click(function() {
+    $(this).closest('.message').fadeOut();
   });
 
   function open_page($page_to_open) {

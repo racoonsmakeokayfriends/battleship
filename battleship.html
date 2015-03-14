@@ -2,7 +2,7 @@
 <html lang="en" class="no-js">
   <head>
     <title>battleship</title>
-    <link rel="stylesheet" type="text/css" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.2.0/css/font-awesome.min.css" />
+    <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css">
     <link rel="stylesheet" type="text/css" href="battleship.css" />
     <script type="text/javascript" src="http://cdnjs.cloudflare.com/ajax/libs/chroma-js/0.5.7/chroma.min.js"></script>    
     <script type="text/javascript" src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
@@ -11,6 +11,66 @@
     <script src="battleship.js"></script>
   </head>
   <body>
+    <!--workinprogress-->
+    <div class="message">
+      <i class="fa fa-warning sym"></i>
+      <div class="content">
+        <h4 class="heading">Hi, I'm a work in progress!</h4>
+        <p class="text">
+      Please don't play me yet if you randomly came across this page against all odds.</p>
+      </div>  
+      <i class="fa fa-close close btn"></i>
+    </div>
+    <!--clicking own board-->
+    <div class="message hidden" id="msg-click-own-board">
+      <i class="fa fa-warning sym"></i>
+      <div class="content">
+        <h4 class="heading">Oops!</h4>
+        <p class="text">That's your board</p>
+      </div>  
+      <i class="fa fa-close close btn"></i>
+    </div>
+
+    <!--inviting too many people-->
+    <div class="message hidden" id="msg-invite-too-many">
+      <i class="fa fa-user-times sym"></i>
+      <div class="content">
+        <h4 class="heading">Too many users!</h4>
+        <p class="text">You can only play with 1 other users</p>
+      </div>  
+      <i class="fa fa-close close btn"></i>
+    </div>
+
+    <!--ship sinking-->
+    <div class="message hidden" id="msg-ship-sunk">
+      <i class="fa fa-ship sym"></i>
+      <div class="content">
+        <h4 class="heading">Ship Sunk</h4>
+        <p class="text">imsinking!</p>
+      </div>  
+      <i class="fa fa-close close btn"></i>
+    </div>
+
+    <!--must enter a username-->
+    <div class="message hidden" id="msg-username-empty">
+      <i class="fa fa-warning sym"></i>
+      <div class="content">
+        <h4 class="heading">You need a username!</h4>
+        <p class="text">I'm going to say stuff</p>
+      </div>  
+      <i class="fa fa-close close btn"></i>
+    </div>
+    <!--username taken-->
+    <div class="message hidden" id="msg-username-taken">
+      <i class="fa fa-warning sym"></i>
+      <div class="content">
+        <h4 class="heading">Username taken</h4>
+        <p class="text">Use another one</p>
+      </div>  
+      <i class="fa fa-close close btn"></i>
+    </div>
+
+
     <!-- +==================== SIGNING IN ====================+ -->
     <div class="page" id="page-signin">
       <div id="signin_msg"></div>
@@ -71,11 +131,7 @@
         <canvas id="canvas1" data="1"></canvas>
       </div>
 
-
-<!--       <button class="btn" id="restart_button">restart</button>
-      <div id="game_in_progress">game in progress</div>
-      <button class="btn hidden X" id="toggle_click_btn"></button> -->
-            <!-- ===== MD: PLAY AGAIN ===== -->
+      <!-- ===== MD: PLAY AGAIN ===== -->
       <div class="replay md hidden" id="md-replay">
         <div class="md-content">          
           <div class="md-hd">
