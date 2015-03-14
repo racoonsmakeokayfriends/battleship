@@ -39,7 +39,7 @@ $(document).ready(function() {
   var $PROPOSE_GAME_CLASSIC_BTN = $('#page-lobby #propose_classic_game_btn');
   var $PROPOSE_GAME_BIG_SHIP_BTN = $('#page-lobby #propose_big_ship_game_btn');
   var $PROPOSE_GAME_REMAINING_BTN = $('#page-lobby #propose_remaining_game_btn');
-  var $PROPOSE_GAME_NO_ALERT_BTN = $('#page-lobby #propose_no_alert_game_btn');
+  var $GAME_OPT_NO_SINK_ALERT = $('#page-lobby #game_option_no_sink_alert');
   var $PROPOSE_GAME_INDIA_BTN = $('#page-lobby #propose_india_game_btn');
   var $PROPOSE_GAME_JAPAN_BTN = $('#page-lobby #propose_japan_game_btn');
   var $PROPOSE_GAME_RUSSIA_BTN = $('#page-lobby #propose_russia_game_btn');
@@ -124,7 +124,7 @@ $(document).ready(function() {
     ------------*/
 
   //// USER SELECTS/DESELECTS A PLAYER
-  $(document).on('click','#page-lobby #present_users li.user',function (e) {
+  $(document).on('click','#page-lobby #present_users li.user, .check',function (e) {
     $(this).toggleClass('selected');
     $(this).children('i').toggleClass('fa-check-square-o');
     $(this).children('i').toggleClass('fa-square-o');
@@ -137,6 +137,11 @@ $(document).ready(function() {
       // TODO
       return;
     }
+
+    if ($GAME_OPT_NO_SINK_ALERT.hasClass('selected')) {
+      // do stuff
+    }
+
     // create a list of all selected users
     var user_list = [];
     user_list.push(my_data);
@@ -178,22 +183,25 @@ $(document).ready(function() {
 
     invite_users(user_list);
   });
-  //// USER ATTEMPTS TO START A 'NO ALERT' GAME
-  $PROPOSE_GAME_NO_ALERT_BTN.click(function () {
-    // check that no more than X users are chosen
-    if ($LOBBY_LIST_USERS.children('li.user.selected').length > MAX_USERS) {
-      // TODO
-      return;
-    }
-    // create a list of all selected users
-    var user_list = [];
-    user_list.push(my_data);
-    $LOBBY_LIST_USERS.children('li.user.selected').each(function () {
-      user_list.push({id:$(this).attr('id'),name:$(this).children('.username').text(),status:'lobby'});
-    });
+  /*
+    //// USER ATTEMPTS TO START A 'NO ALERT' GAME
+    $PROPOSE_GAME_NO_ALERT_BTN.click(function () {
+      // check that no more than X users are chosen
+      if ($LOBBY_LIST_USERS.children('li.user.selected').length > MAX_USERS) {
+        // TODO
+        return;
+      }
+      // create a list of all selected users
+      var user_list = [];
+      user_list.push(my_data);
+      $LOBBY_LIST_USERS.children('li.user.selected').each(function () {
+        user_list.push({id:$(this).attr('id'),name:$(this).children('.username').text(),status:'lobby'});
+      });
 
-    invite_users(user_list);
-  });
+      invite_users(user_list);
+    });
+  */
+
   //// USER ATTEMPTS TO START A 'INDIA' GAME
   $PROPOSE_GAME_INDIA_BTN.click(function () {
     // check that no more than X users are chosen
@@ -304,6 +312,13 @@ $(document).ready(function() {
     game_rooms_ref.child(gameroom_key).child('user_list').child(PLACEHOLDER_FLAG).set('');
     game_rooms_ref.child(gameroom_key).child('chatlog').set('');
     game_rooms_ref.child(gameroom_key).child('gameover').set(false);
+    // set the gameplay options
+    if ($GAME_OPT_NO_SINK_ALERT.hasClass('selected')) {
+      game_rooms_ref.child(gameroom_key).child('sink_alert').set(false);
+    }
+    else {
+      game_rooms_ref.child(gameroom_key).child('sink_alert').set(true);
+    }
     for (var i = 0; i < user_list.length; i++) {
       all_users_ref.child(user_list[i].id).child('status').set('invited');
       all_users_ref.child(user_list[i].id).child('gameroom_key').set(gameroom_key);
@@ -337,9 +352,13 @@ $(document).ready(function() {
   }
 
   function start_game() {
-    console.log('-- start game --');
     var battleship_ref = get_my_gameroom_ref();
     battleship_controller = new Battleship.Controller(battleship_ref,my_data.id);
+    battleship_ref.once('value',function(snap) {
+      if (!snap.val().sink_alert){
+        battleship_controller.set_ship_sink_alert(false);
+      }
+    })
   }
 
   function join_game() {

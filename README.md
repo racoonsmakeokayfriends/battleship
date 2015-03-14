@@ -39,10 +39,12 @@ Battleship
     [ ] deleting empty chatrooms
     [ ] collecting meta-data
     [ ] security stuff (baby)
-
+    [ ] ai
+    
   ---> variations <---
       [x] html for choosing these variations
-      [ ] don't alert a ship has been sunk
+      [x] don't alert a ship has been sunk
+        [ ] clicking on the correct button makes this happen
       [ ] different number of 'guesses' per round
           [ ] 1 for remaining ships
           [ ] 1 for the size of the largest remaining ship
@@ -58,6 +60,7 @@ Battleship
     [ ] alerting
         [ ] when player clicks their own board
         [ ] when a ship has been sunk
+        [ ] player has invited too many people
     [ ] working out player leaving scenarios
     [ ] work on graphics for board
 

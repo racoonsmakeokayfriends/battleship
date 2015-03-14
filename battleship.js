@@ -51,6 +51,11 @@ $(document).ready(function() {
 
   Battleship.BLOCK_BORDER_COLOR = 'black';
 
+
+  Battleship.GameOptions = {
+    ship_sink_alert_on: true
+  };
+
 /* =========================================================
                            BOARD
    ========================================================= */
@@ -75,7 +80,11 @@ $(document).ready(function() {
   /*------------
      displaying 
     ------------*/
+  Battleship.Board.prototype.alert_ship_sunk = function(ship_name) {
+    if (!Battleship.GameOptions.ship_sink_alert_on) {return;}
 
+    alert(ship_name+' has been sunk!');
+  }
   Battleship.Board.prototype.draw_hit = function (left,top) {
     this.context.fillStyle = 'red';
   };
@@ -95,7 +104,13 @@ $(document).ready(function() {
     this.context.fillStyle = 'blue';
   };
   Battleship.Board.prototype.draw_sink = function (left,top) {
-    this.context.fillStyle = 'black';
+    if (Battleship.GameOptions.ship_sink_alert_on) {
+      this.context.fillStyle = 'black';
+    }
+    else {
+      this.draw_hit(left,top);
+    }
+    // this.context.fillStyle='black';
   };
   Battleship.Board.prototype.draw_my_board = function () {
     // Iterate over columns / rows in board data and draw each non-empty block.
@@ -292,7 +307,7 @@ $(document).ready(function() {
       } 
     };
     this.player_ref.child('ships').child(ship_data.name).child('sunk').set(true)
-  }
+  };
 
   /*------------
       getters 
@@ -397,8 +412,8 @@ $(document).ready(function() {
       this.set_square_state(row,col,Battleship.HIT);
       var ship_sank = this.check_if_ship_sank(row,col)
       if (ship_sank) { //todo
-        // boat is sunk
-        // alert('you sunk '+ship_sank.name);
+        // boat is sunk        
+        this.alert_ship_sunk(ship_sank.name);
         this.sink_the_ship(ship_sank)
         if (this.check_if_game_over()) { //todo
           alert('gameover');
@@ -457,9 +472,11 @@ $(document).ready(function() {
   Battleship.PLAYING_STATE = { Watching: 0, Joining: 1, Playing: 2 };
 
   Battleship.Controller = function (gameroom_ref,myid) {
-    console.log('=== create controller! ===')
     this.gameroom_ref = gameroom_ref;
     this.battleship_ref = gameroom_ref.child('game');
+
+    // gameplay options (default values)
+    Battleship.GameOptions.ship_sink_alert_on = true;
 
     this.create_boards();
     var self=this;
@@ -468,11 +485,14 @@ $(document).ready(function() {
       userlist_snap.forEach(function(user_snap) {
         if (user_snap.key() == myid) {
           self.start_playing(i);
-          console.log('====' + i.toString() + '====');
         }
         i+=1;
       })
     })  
+  };
+
+  Battleship.Controller.prototype.set_ship_sink_alert = function(bool) {
+    Battleship.GameOptions.ship_sink_alert_on = bool;
   };
 
   Battleship.Controller.prototype.create_boards = function () {
