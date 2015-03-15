@@ -31,10 +31,23 @@ Battleship
                       author -> who sent the message
               user_list
                   + $username$
-              battleship
+              game
+                  player_turn
+                      num -> the num of the player whose turn it is
+                      timestamp -> time this turn began
+              gameover -> bool of whether or not the game is over
+              sink_alert -> bool of this game option
+              player_left -> flag whether a player has gone
 
 
 ========== GOALS+TIMELINES ==========
   3/13/15 goals:
     [x] alerting sunken ship option
     [x] put on interwebs
+  3/14/15 goals:
+    [ ] contact me
+        [ ] bugs
+        [ ] suggestions
+    [ ] unresponsive players
+        [ ] detect they are unresponsive
+        [ ] decide what to do when they are

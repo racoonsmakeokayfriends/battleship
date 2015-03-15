@@ -62,6 +62,7 @@ $(document).ready(function() {
   var $MSG_INVITE_TOO_MANY = $('#msg-invite-too-many');
   var $MSG_USERNAME_EMPTY = $('#msg-username-empty');
   var $MSG_USERNAME_TAKEN = $('#msg-username-taken');
+  var $MSG_OPPONENT_LEFT = $('#msg-opponent-left');
 
   // Some globals for this user
   var my_name = 'noone';
@@ -112,15 +113,16 @@ $(document).ready(function() {
     var connected_ref = new Firebase(FB_URL+'/.info/connected');
     connected_ref.on('value', function(is_online) {
       if (is_online.val()) {
+        // if player is in a gameroom, delete that gameroom
         all_users_ref.child(username).onDisconnect().remove();
       }
       else {
       }
     });
-
+    // if user has been invited to a game, open the invitation
     all_users_ref.child(username).on('child_changed',function (snapshot) {
       if (snapshot.val().status == 'invited') {
-        $LOBBY_MD_INVITATION.removeClass('hidden')
+        $LOBBY_MD_INVITATION.removeClass('hidden');
       }
     });
   };
@@ -314,10 +316,12 @@ $(document).ready(function() {
 
 
   function invite_users(user_list) {
+    // initialize the gameroom
     var gameroom_key = game_rooms_ref.push({'timestamp':Firebase.ServerValue.TIMESTAMP}).key();
     game_rooms_ref.child(gameroom_key).child('user_list').child(PLACEHOLDER_FLAG).set('');
     game_rooms_ref.child(gameroom_key).child('chatlog').set('');
     game_rooms_ref.child(gameroom_key).child('gameover').set(false);
+
     // set the gameplay options
     if ($GAME_OPT_NO_SINK_ALERT.hasClass('selected')) {
       game_rooms_ref.child(gameroom_key).child('sink_alert').set(false);
@@ -325,6 +329,8 @@ $(document).ready(function() {
     else {
       game_rooms_ref.child(gameroom_key).child('sink_alert').set(true);
     }
+
+    // invite the users
     for (var i = 0; i < user_list.length; i++) {
       all_users_ref.child(user_list[i].id).child('status').set('invited');
       all_users_ref.child(user_list[i].id).child('gameroom_key').set(gameroom_key);
@@ -378,12 +384,13 @@ $(document).ready(function() {
         my_gameroom_ref.remove();
       }
     });
-    // todo: change 'now' to timestamp
-    my_gameroom_ref.child('user_list').child(my_data.id).set({'time_entered':'now'});
+
+    my_gameroom_ref.child('user_list').child(my_data.id).set({'timestamp':Firebase.ServerValue.TIMESTAMP});
     open_page($PAGE_GAMEROOM);
     
     var onlycallonce_hack = true;
 
+    // === PLAYER ENTERED ===
     my_gameroom_ref.child('user_list').on('child_added', function (snapshot) {
       if (get_user_id(snapshot) == PLACEHOLDER_FLAG) return;
       // add_user_to_user_list(snapshot); // we're not showing the userlist for battleship
@@ -400,10 +407,14 @@ $(document).ready(function() {
       });
     }); 
 
+    // === PLAYER LEFT ===
     my_gameroom_ref.child('user_list').on('child_removed', function (snapshot) {
-      // todo: create message to chatlog that says someone left
       // delete the entire gameroom when everyone leaves
       // note, it needs to be 1/we have the placeholder because if we get to 0, the userlist (not gameroom) will delete itself
+      $MSG_OPPONENT_LEFT.fadeIn();
+      // todo: take player back to lobby
+      // my_gameroom_ref.child('user_list').child(my_data.id).remove();
+      leave_game_room();
       my_gameroom_ref.child('user_list').once('value',function (snapshot) {
         if (snapshot.numChildren() == 1) {
           my_gameroom_ref.remove();
@@ -411,13 +422,13 @@ $(document).ready(function() {
       });
     });
 
+    // === MESSAGE ADDED ===
     my_gameroom_ref.child('chatlog').on('child_added', function (snapshot) {
       add_msg_to_chatlog(snapshot);
     });
-
+    // === GAME OVER ===
     my_gameroom_ref.child('gameover').on('value',function (snapshot) {
       if (snapshot.val() == true) {
-        // end the game
         $('#md-replay').removeClass('hidden');
       }
     });
@@ -465,6 +476,7 @@ $(document).ready(function() {
 
   $('.md .md-close').click(function() {
     $(this).closest('.md').addClass('hidden');
+    $(this).closest('.md').fadeOut();
   });
 
   $('.message .close.btn').click(function() {
@@ -495,6 +507,34 @@ $(document).ready(function() {
     all_users_ref.child(my_data.id).child('gameroom_key').set(null);
     open_page($PAGE_LOBBY);    
   }
+
+
+  $('#report-bug-btn').click(function() {
+    $('#md-report-bug').fadeIn();
+  });
+  $('#give-feedback-btn').click(function() {
+    $('#md-give-feedback').fadeIn();
+  });
+
+  $('#send_bug_btn').click(function() {
+    var summary_val = $('#bug_report_summary_field').val().trim();
+    var os_val = $('#bug_report_summary_field').val().trim();
+    var brows_val = $('#bug_report_summary_field').val().trim();
+    if (summary_val == '') {
+      // validation crap
+    }
+    var report = {summary:summary_val, os:os_val, browser:brows_val, timestamp:Firebase.ServerValue.TIMESTAMP};
+    fb.child('meta').child('bug-report').push(report);
+  });
+  $('#send_feedback_btn').click(function() {
+    var summary_val = $('#feedback_summary_field').val().trim();
+    var type_val = $('#feedback_type').val();
+    if (summary_val == '') {
+      // validation crap
+    }
+    var report = {summary:summary_val, timestamp:Firebase.ServerValue.TIMESTAMP};
+    fb.child('meta').child('feedback').child(type_val).push(report);
+  });
 
 })
 

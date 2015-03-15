@@ -52,7 +52,7 @@ $(document).ready(function() {
   Battleship.FLAG_B = 'flaggedandshit';
 
   Battleship.BLOCK_BORDER_COLOR = 'black';
-
+  Battleship.TURN_TIME_LIMIT = 30000;
 
   Battleship.GameOptions = {
     ship_sink_alert_on: true
@@ -515,7 +515,8 @@ $(document).ready(function() {
     this.my_board = this.boards[player_num];
     this.my_board.is_my_board = true;
     this.my_board.draw();
-    this.battleship_ref.child('player_turn').set(0);
+    this.battleship_ref.child('player_turn/num').set(0);
+    this.battleship_ref.child('player_turn/timestamp').set(Firebase.ServerValue.TIMESTAMP);
     inform_turn_info(player_num == 0);
     this.my_num = player_num;
 
@@ -525,10 +526,9 @@ $(document).ready(function() {
     var self = this;
     // inform the player whose turn it is
     this.battleship_ref.child('player_turn').on('value',function (snapshot) {
-      inform_turn_info(snapshot.val() == self.my_num);
-    })
+      inform_turn_info(snapshot.val().num == self.my_num);
+    });
     this.enable_mouse();
-
   };
 
 
@@ -551,16 +551,22 @@ $(document).ready(function() {
       }
 
       // MAKING A GUESS
-      self.battleship_ref.child('player_turn').once('value',function (snapshot) {
+      self.battleship_ref.child('player_turn/num').once('value',function (snapshot) {
         if (snapshot.val() == self.my_num) { 
           // TODO:if this guess doesn't change anything, dont change the player turn
           var state = self.boards[1-self.my_num].make_guess(pos.row,pos.col);
-          self.battleship_ref.child('player_turn').set(1-snapshot.val());
+          self.battleship_ref.child('player_turn/num').set(1-snapshot.val());
+          self.battleship_ref.child('player_turn/timestamp').set(Firebase.ServerValue.TIMESTAMP);
+          // clearInterval(turn_timer);
+          // var turn_timer = setInterval(function() {func_turn_timer()},Battleship.TURN_TIME_LIMIT);
         }
       });
     });  
   };
-
+  
+  function func_turn_timer() {
+    alert('rawwwrtooktoolong!');
+  }
 
   Battleship.Controller.prototype.game_over = function () {
     this.restart_game();

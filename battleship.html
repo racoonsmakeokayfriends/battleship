@@ -8,6 +8,8 @@
     <script type="text/javascript" src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
     <script type="text/javascript" src="https://code.jquery.com/ui/1.11.2/jquery-ui.min.js"></script>
     <script src="https://cdn.firebase.com/js/client/2.0.4/firebase.js"></script>
+    <script type="text/javascript" src="idle.js"></script>
+
     <script src="battleship.js"></script>
   </head>
   <body>
@@ -66,6 +68,15 @@
       <div class="content">
         <h4 class="heading">Username taken</h4>
         <p class="text">Use another one</p>
+      </div>  
+      <i class="fa fa-close close btn"></i>
+    </div>
+    <!--opponent left-->
+    <div class="message hidden" id="msg-opponent-left">
+      <i class="fa fa-warning sym"></i>
+      <div class="content">
+        <h4 class="heading">Your opponent left</h4>
+        <p class="text">You will return to the lobby</p>
       </div>  
       <i class="fa fa-close close btn"></i>
     </div>
@@ -141,6 +152,43 @@
           <button class="btn md-close" id="accept_replay_btn">yes</button>
           <button class="btn md-close" id="reject_replay_btn">no</button>
         </div>
+      </div>
+    </div>
+
+    <button id="report-bug-btn"><i class="fa fa-bug"></i> report bug</button>
+    <button id="give-feedback-btn"><i class="fa fa-comment-o"></i> give feedback</button>
+    <!-- ===== MD: REPORT BUG ===== -->
+    <div class="md hidden" id="md-report-bug">
+      <div class="md-content">          
+        <div class="md-hd">
+          Bugs
+        </div>
+        <label>Please describe the bug:</label>
+        <textarea id="bug_report_summary_field" placeholder="please include steps for me to reproduce the error"></textarea>
+        <label>Your operating system:</label>
+        <input type="text" id="bug_report_os_field" placeholder="e.g. windows, mac, etc."></input>
+        <label>The browser you experienced the bug with:</label>
+        <input type="text" id="bug_report_browser_field" placeholder="e.g. chrome, firefox, internet explorer, etc."></input>
+        <button class="btn md-close" id="send_bug_btn">send</button>
+      </div>
+    </div>
+
+    <!-- ===== MD: GIVE FEEDBACK ===== -->
+    <div class="md hidden" id="md-give-feedback">
+      <div class="md-content">          
+        <div class="md-hd">
+          Feedback
+        </div>
+        <label>Type of feedback:</label>
+        <select id="feedback_type">
+          <option value="suggestions">suggestions - features</option>
+          <option value="suggestions">suggestions - improvements</option>
+          <option value="comments">comments</option>
+          <option value="hatemail">hate mail</option>
+        </select>
+        <label>Summary:</label>
+        <textarea id="feedback_summary_field"></textarea>
+        <button class="btn md-close" id="send_feedback_btn">send</button>
       </div>
     </div>
     <script type='text/javascript' src="battleship-ui.js"></script>
