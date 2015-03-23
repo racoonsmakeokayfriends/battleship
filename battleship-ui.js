@@ -61,7 +61,7 @@ $(document).ready(function() {
   var my_name = 'noone';
   var my_data = {id:'',name:'',status:''};
   var battleship_controller;
-
+  var DEAD_GAMEROOM_AGE = 600000/100;
   /*------------
        SIGNIN  
     ------------*/
@@ -209,24 +209,11 @@ $(document).ready(function() {
 
     // check if its us&we got a invitation
     if (get_user_id(snapshot) == my_data.id && snapshot.val().status == 'invited') {
-      // put all the nessecary game info into the invitation
-      var txt = 'A Classic Game';
-      var my_gr = get_my_gameroom_ref();
-      my_gr.child('creator').once('value',function(snap) {
-        $LOBBY_MD_INVITATION.find('#game-creator').html(snap.val());
-      });
-      my_gr.child('sink_alert').once('value',function(snap) {
-        if (!snap.val()) {
-          txt += '<br/>+ NO alerts when a ship has been sunk';
-        }
-        $LOBBY_MD_INVITATION.find('.md-txt').html(txt);
-      });
-      $LOBBY_MD_INVITATION.removeClass('hidden');
+      create_invitation(snapshot);
     }
   });
 
-
-  function invite_users(user_list) {
+  function continue_inviting(user_list) {    
     // initialize the gameroom
     var gameroom_key = game_rooms_ref.push({'timestamp':Firebase.ServerValue.TIMESTAMP}).key();
     game_rooms_ref.child(gameroom_key).child('user_list').child(PLACEHOLDER_FLAG).set('');
@@ -237,10 +224,10 @@ $(document).ready(function() {
     // set the gameplay options
     var bs_op = new Battleship_Options();
     if ($GAME_OPT_SINK_ALERT.hasClass('on')) {
-      bs_op.set_ship_sink_alert(false);
+      bs_op.set_ship_sink_alert(true);
     }
     else {
-      bs_op.set_ship_sink_alert(true);
+      bs_op.set_ship_sink_alert(false);
     }
 
     if ($('#opt-num-shots-remaining').hasClass('active')) {
@@ -261,6 +248,23 @@ $(document).ready(function() {
       all_users_ref.child(user_list[i].id).child('status').set('invited');
       all_users_ref.child(user_list[i].id).child('gameroom_key').set(gameroom_key);
     };
+  }
+  function invite_users(user_list) {
+    // this deletes any empty gamerooms
+    game_rooms_ref.once('value',function (gameroom_list_snap) {
+      gameroom_list_snap.forEach(function (gameroom_snap) {
+        var data = gameroom_snap.val();
+        if (!data.user_list) {
+          gameroom_snap.ref().remove();
+        }
+        else if (gameroom_snap.child('user_list').numChildren() == 1 && (new Date()-data.timestamp) > DEAD_GAMEROOM_AGE) {
+          gameroom_snap.ref().remove();
+        }
+        else {            
+        }        
+      });
+      continue_inviting(user_list);
+    })
   }
 
   function add_user_to_user_list(user_snapshot) {
@@ -410,6 +414,7 @@ $(document).ready(function() {
 
   $('.message .close.btn').click(function() {
     $(this).closest('.message').fadeOut();
+    $(this).closest('.message').removeClass('hidden');
   });
   $('.tgl-btn').on('click', function() {
     $(this).toggleClass('on');
@@ -444,6 +449,24 @@ $(document).ready(function() {
     open_page($PAGE_LOBBY);    
   }
 
+  function create_invitation() {
+    // put all the nessecary game info into the invitation
+    var txt = 'A Classic Game';
+    var my_gr = get_my_gameroom_ref();
+    my_gr.child('creator').once('value',function(snap) {
+      $LOBBY_MD_INVITATION.find('#game-creator').html(snap.val());
+    });
+    my_gr.child('options').once('value',function (snap) {
+      var options = snap.val();
+      txt += '<br/>Num Shots Type: ' + options.num_shots_type;
+      txt += '<br/>Ship Sink Alert: ';
+      txt += options.ship_sink_alert_on ? 'on' : 'off';
+      console.log(options.ship_sink_alert_on);
+      $LOBBY_MD_INVITATION.find('.md-txt').html(txt);
+    })
+    $LOBBY_MD_INVITATION.removeClass('hidden');
+
+  }
 /* =========================================================
                       SENDING FEEDBACK
    ========================================================= */

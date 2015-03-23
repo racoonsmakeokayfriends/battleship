@@ -13,9 +13,10 @@ $(document).ready(function() {
 
   var $MSG_CLICK_OWN_BOARD = $('#msg-click-own-board');
   var $MSG_SHIP_SUNK = $('#msg-ship-sunk');
+  var $MSG_TARGET_LIMIT = $('#msg-target-limit');
+  var $MSG_EXTRA_TARGETS = $('#msg-extra-targets');
   var $NUM_SHOTS_REMAINING = $('#num-shots-remaining');
   var $FIRE_SHOTS_BTN = $('#fire-shots-btn');
-  var $MSG_TARGET_LIMIT = $('#msg-target-limit');
 /* =========================================================
                 CONFIG, CONSTANTS, + GLOBALS
    ========================================================= */
@@ -614,6 +615,15 @@ $(document).ready(function() {
       this.boards.push(new Battleship.Board(canvas, player_ref,this.game_options));
     }
   };
+  //// Indicate to the player which board belongs to whom
+  Battleship.Controller.prototype.set_board_identification = function () {
+    var a = this.my_num.toString();
+    var b = (1-this.my_num).toString();
+    $('canvas').removeClass('my_board');
+    $('canvas#canvas'+a).addClass('my_board');
+    $('#canvas'+a+'-lbl').html('my board');
+    $('#canvas'+b+'-lbl').html('opponent\'s board');
+  };
   //// Once we've joined, enable controlling our player.
   Battleship.Controller.prototype.start_playing = function (player_num) {
     this.my_player_ref = this.battleship_ref.child('player' + player_num);
@@ -625,6 +635,7 @@ $(document).ready(function() {
     this.battleship_ref.child('player_turn/timestamp').set(Firebase.ServerValue.TIMESTAMP);
     inform_turn_info(player_num == 0);
     this.my_num = player_num;
+    this.set_board_identification();
 
     // Clear my_player_ref 'online' status when we disconnect so somebody else can join.
     this.my_player_ref.child('online').onDisconnect().remove();
@@ -694,8 +705,23 @@ $(document).ready(function() {
       self.update_target_arr(pos,dtar);
     });
   };
+  //// Handles selecting/deselecting targets
+  Battleship.Controller.prototype.fire_the_missles = function() { 
+    var op =  1-this.my_num;
+    this.boards[op].fire_all_targets(this.targets);
+    this.targets = [];
 
-  //// Sets up handlers for all mouse actions  
+    // switch turns
+    this.battleship_ref.child('player_turn/num').set(op);
+    this.battleship_ref.child('player_turn/timestamp').set(Firebase.ServerValue.TIMESTAMP);
+
+    var num_shots = this.boards[op].get_num_shots();
+    this.battleship_ref.child('player'+op.toString()+'/num_shots').set(num_shots);
+    //alert('player'+op.toString()+'/num_shots/'+num_shots.toString());
+    // clearInterval(turn_timer);
+    // var turn_timer = setInterval(function() {func_turn_timer()},Battleship.TURN_TIME_LIMIT);
+  }
+  //// Sets up handlers for all mouse actions    
   Battleship.Controller.prototype.enable_mouse = function () {
     var self = this;
     $(document).on('click','canvas',function (evt) {
@@ -735,22 +761,15 @@ $(document).ready(function() {
       // 3. 
       // fire the shots
 
-
-      var op =  1-self.my_num;
-      self.boards[op].fire_all_targets(self.targets);
-      self.targets = [];
-
-      // switch turns
-      self.battleship_ref.child('player_turn/num').set(op);
-      self.battleship_ref.child('player_turn/timestamp').set(Firebase.ServerValue.TIMESTAMP);
-
-      var num_shots = self.boards[op].get_num_shots();
-      self.battleship_ref.child('player'+op.toString()+'/num_shots').set(num_shots);
-      //alert('player'+op.toString()+'/num_shots/'+num_shots.toString());
-      // clearInterval(turn_timer);
-      // var turn_timer = setInterval(function() {func_turn_timer()},Battleship.TURN_TIME_LIMIT);
+      self.my_player_ref.child('num_shots').once('value',function(snap) {
+        var remaining_shots = snap.val();
+        if (remaining_shots > 0) {
+          $MSG_EXTRA_TARGETS.fadeIn();         
+        }
+        self.fire_the_missles();        
       })  
-  };
+    });
+  }
   
   function func_turn_timer() {
     alert('rawwwrtooktoolong!');

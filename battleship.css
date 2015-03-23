@@ -487,3 +487,10 @@ canvas {
 .tgl-btns.four .btn {
   width:25%;
 }
+
+canvas.my_board {
+  border: 2px solid yellow;
+}
+canvas.my_board:before {
+  content:'my board;
+}

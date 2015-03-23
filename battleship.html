@@ -100,6 +100,16 @@
       </div>  
       <i class="fa fa-close close btn"></i>
     </div>
+    <!--extra targets-->
+    <div class="message hidden" id="msg-extra-targets">
+      <i class="fa fa-user-times sym"></i>
+      <div class="content">
+        <h4 class="heading">You still have extra targets</h4>
+        <p class="text">Make sure you use all your missles**</p>
+      </div>  
+      <i class="fa fa-close close btn"></i>
+    </div>
+
 
 
     <!-- +==================== SIGNING IN ====================+ -->
@@ -167,8 +177,14 @@
 
       <div class="container" id="game">
         <div id="turn-info"></div>
-        <canvas id="canvas0" data="0"></canvas>
-        <canvas id="canvas1" data="1"></canvas>
+        <div class="container">
+          <h3 id="canvas0-lbl"></h3>
+          <canvas id="canvas0" data="0"></canvas>
+        </div>
+        <div class="container">
+          <h3 id="canvas1-lbl"></h3>
+          <canvas id="canvas1" data="1"></canvas>
+        </div>
 
         <div class="dashboard" id="game-dashboard">
           <span class="value" id="num-shots-remaining"></span>
