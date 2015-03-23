@@ -15,7 +15,7 @@ $(document).ready(function() {
   var $MSG_SHIP_SUNK = $('#msg-ship-sunk');
   var $NUM_SHOTS_REMAINING = $('#num-shots-remaining');
   var $FIRE_SHOTS_BTN = $('#fire-shots-btn');
-
+  var $MSG_TARGET_LIMIT = $('#msg-target-limit');
 /* =========================================================
                 CONFIG, CONSTANTS, + GLOBALS
    ========================================================= */
@@ -682,15 +682,16 @@ $(document).ready(function() {
       var dtar;
       if (remaining_shots <= 0) {
         dtar = self.boards[op].set_target_undo_only(pos.row,pos.col);
-        alert('limit reached!');
       }
       else {
         dtar = self.boards[op].set_target(pos.row,pos.col);
       }
       var new_remaining_shots = remaining_shots+dtar;
+      if (new_remaining_shots == 0) {        
+        $MSG_TARGET_LIMIT.removeClass('hidden');
+      }
       self.my_player_ref.child('num_shots').set(new_remaining_shots);
       self.update_target_arr(pos,dtar);
-      console.log(self.targets);
     });
   };
 
