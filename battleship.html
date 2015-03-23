@@ -9,10 +9,21 @@
     <script type="text/javascript" src="https://code.jquery.com/ui/1.11.2/jquery-ui.min.js"></script>
     <script src="https://cdn.firebase.com/js/client/2.0.4/firebase.js"></script>
     <script type="text/javascript" src="idle.js"></script>
-
+    <script src="battleship-options.js"></script>
     <script src="battleship.js"></script>
   </head>
   <body>
+    <!-- 
+    #f6c574
+    #00aacf
+    #00b3a0
+    #fc5652
+
+    yellow
+    blue
+    green
+    red
+     -->
     <!--workinprogress-->
     <div class="message">
       <i class="fa fa-warning sym"></i>
@@ -84,13 +95,16 @@
 
     <!-- +==================== SIGNING IN ====================+ -->
     <div class="page" id="page-signin">
-      <div id="signin_msg"></div>
-      <input type="text" id="username_field" placeholder="username">
-      <select id="lobby_type_field">
-        <option value="strangers">chat with strangers</option>
-        <option value="friends">chat with friends</option>
-      </select>
-      <button class="btn" id="enter_lobby_btn">enter lobby</button>
+      <div class="background-img"></div>
+      <div class="page-content">
+        <div id="signin_msg"></div>
+        <input type="text" id="username_field" placeholder="username">
+        <select id="lobby_type_field">
+          <option value="strangers">chat with strangers</option>
+          <option value="friends">chat with friends</option>
+        </select>
+        <button class="btn" id="enter_lobby_btn">enter lobby</button>
+      </div>
     </div>
 
 
@@ -98,26 +112,32 @@
     <div class="page hidden" id="page-lobby">
       <h1>Lobby!</h1>
       <button class="btn" id="propose_classic_game_btn">propose classic game with:</button>
-      <span class="game-option check" id="game_option_no_sink_alert"><i class="fa fa-square-o"></i>no alert</button>
-      <button class="btn" id="propose_remaining_game_btn">propose remaining game with:</button>
-      <button class="btn" id="propose_big_ship_game_btn">propose big ship game with:</button>
-      <button class="btn" id="propose_india_game_btn">propose indian game with:</button>
-      <button class="btn" id="propose_japan_game_btn">propose japanese game with:</button>
-      <button class="btn" id="propose_russia_game_btn">propose russian game with:</button>
+<!--       <span class="game-option check" id="game_option_no_sink_alert">
+        <i class="fa fa-square-o"></i>
+        no alert
+      </span> -->
+      <div class="tgl-btn" id="opt-sink-alert">
+        <span>Sink Alert</span>
+      </div>
+      <label>Number of Shots Option:</label>
+      <div class="tgl-btns three" id="opt-num-shots">
+        <div class="btn active" id="opt-num-shots-standard">standard</div>
+        <div class="btn" id="opt-num-shots-remaining">remaining ship</div>
+        <div class="btn" id="opt-num-shots-biggest">biggest ship</div>
+      </div>
       <ul class="list-users col-3 interactive" id="present_users">
       </ul>
 
       <!-- ===== MD: INVITATION ===== -->
       <div class="invite md hidden" id="md-invitation">
         <div class="md-content">          
-          <div class="md-hd">
-            InvitationStuffbutts
-          </div>
-          Do you want to be invited to a thing?
+          <div class="md-hd">You've recieved an invitation from <strong id="game-creator"></strong></div>
+          <span class="md-txt"></span>
           <button class="btn md-close" id="accept_invite_btn">yes</button>
           <button class="btn md-close" id="reject_invite_btn">no</button>
         </div>
       </div>
+
     </div>
 
 
@@ -140,6 +160,11 @@
         <div id="turn-info"></div>
         <canvas id="canvas0" data="0"></canvas>
         <canvas id="canvas1" data="1"></canvas>
+
+        <div class="dashboard" id="game-dashboard">
+          <span class="value" id="num-shots-remaining"></span>
+          <button id="fire-shots-btn"><i class="fa fa-check"></i></button>
+        </div>
       </div>
 
       <!-- ===== MD: PLAY AGAIN ===== -->
@@ -162,6 +187,7 @@
       <div class="md-content">          
         <div class="md-hd">
           Bugs
+          <button class="btn md-close"><i class="fa fa-remove"></i></button>
         </div>
         <label>Please describe the bug:</label>
         <textarea id="bug_report_summary_field" placeholder="please include steps for me to reproduce the error"></textarea>
@@ -178,6 +204,7 @@
       <div class="md-content">          
         <div class="md-hd">
           Feedback
+          <button class="btn md-close"><i class="fa fa-remove"></i></button>
         </div>
         <label>Type of feedback:</label>
         <select id="feedback_type">

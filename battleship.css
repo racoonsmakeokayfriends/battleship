@@ -20,9 +20,9 @@ header {
 }
 
 .page {
-  width: 75%;
+  width: 75%;/*
   min-width: 1000px;
-  min-height: 600px;
+  min-height: 600px;*/
   height: 500px;
   background-color: rgba(0, 0, 0, 0.3);
   text-align: center;
@@ -302,4 +302,188 @@ canvas {
 .message .close {
   float: right;
   margin: 0.5em;
+}
+
+#page-signin {
+  width: 400px;
+  height: 400px;
+  border: 2px solid blue;
+  position: relative;
+  text-align: center;
+}
+#page-signin .background-img {
+  background-image: url('http://media.nara.gov/stillpix/330-cfd/1987/DN-SC-87-02921.jpeg');
+  background-size: cover;
+  display: block;
+  filter: blur(3px);
+  -webkit-filter: blur(3px);
+  position: absolute;
+  height:100%;
+  width:100%;
+  z-index: 1;
+}
+
+#page-signin .page-content {
+  width: 55%;
+  height: 70%;
+  background: rgba(255, 255, 255, 0.35);
+  font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+  position: relative;
+  margin: 15% auto;
+  z-index: 2;
+}
+
+#page-signin2 {
+  width: 400px;
+  height: 400px;
+  border: 2px solid blue;
+  position: relative;
+  text-align: center;
+}
+#page-signin2 .background-img {
+  background-image: url('http://media.nara.gov/stillpix/330-cfd/1987/DN-SC-87-02921.jpeg');
+  background-size: cover;
+  display: block;
+  filter: blur(3px);
+  -webkit-filter: blur(3px);
+  position: absolute;
+  height:100%;
+  width:100%;
+  z-index: 1;
+}
+
+#page-signin2 .page-content {
+  width: 55%;
+  height: 70%;
+  background: rgba(255, 255, 255, 0.35);
+  font-family: Helvetica Neue, Helvetica, Arial, sans-serif;
+  position: relative;
+  margin: 15% auto;
+  z-index: 2;
+}
+
+/* ===============================================
+                    TOGGLE-BUTTON
+   =============================================== */
+.tgl-btn {
+  width: 32px;
+  border-radius: 4px;
+  height: 10px;
+  background-color: #FFA39F;
+  position: relative;
+  margin: 20px 0px;
+  -moz-user-select: none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  -o-user-select: none;
+  user-select: none;
+}
+
+.tgl-btn:after {
+  border-radius: 100%;
+  background-color: #fc5652;
+  position: absolute;
+  left: 0;
+  top: -2.5px;
+  width: 15px;
+  height: 15px;
+  content: '';
+  -webkit-transform: translate(0);
+  -ms-transform: translate(0);
+  transform: translateX(0);
+  transition: all 0.5s ease, background-color 0.5s linear;
+  -webkit-transition: all 0.5s ease, background-color 0.5s linear;
+  -moz-transition: all 0.5s ease, background-color 0.5s linear;
+}
+
+.tgl-btn > span {
+  margin-left: 47px;
+  position: relative;
+  top: -4.5px;
+  color: #fc5652;
+  white-space: nowrap;
+  display: block;
+  cursor: pointer;
+  font-family: Arial, sans-serif;
+  font-size: 13px;
+  font-weight: bold;
+  line-height: 1.4;
+  transition: all 0.5s ease;
+  -webkit-transition: all 0.5s ease;
+  -moz-transition: all 0.5s ease;
+}
+
+.tgl-btn:hover {
+  cursor: pointer;
+}
+
+.tgl-btn:hover span {
+  color: #FFA39F;
+}
+
+.tgl-btn.on {
+  background-color: #33E6AA;
+  transform: translate3d(0, 0, 0);
+}
+
+.tgl-btn.on:hover span {
+  color: #33E6AA;
+}
+
+.tgl-btn.on:after {
+  background-color: #00b377;
+  -webkit-transform: translate(17px);
+  -ms-transform: translate(17px);
+  transform: translateX(17px);
+}
+
+.tgl-btn.on > span {
+  color: #00b377;
+}
+
+/* ===============================================
+                TOGGLE-BUTTON-GROUPS
+   =============================================== */
+.tgl-btns {  
+  display: inline-block;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.9);
+  font-family: Calibri, Arial, sans-serif;
+  background-color: coral;
+  border-radius: 0.25em;
+  line-height: 1;
+  font-size: 1.2em;
+  width: 100%;
+  text-align: center;
+}
+.tgl-btns:after {
+  content: ".";
+  display: block;
+  height: 0;
+  clear: both;
+  visibility: hidden;
+}
+.tgl-btns .btn {
+  float:left;
+  border-radius: 0em;
+  padding: 5px 10px;
+  transition:all 0.3s ease-out;
+}
+.tgl-btns .btn.active {
+  background-color:green;
+}
+.tgl-btns .btn:hover {
+  background-color: rgba(255,255,255,0.3);
+}
+.tgl-btns.one .btn,.tgl-btns.none .btn {
+  width:100%;
+}
+.tgl-btns.two .btn {
+  width:50%;
+}
+.tgl-btns.three .btn {
+  width:33.33%;
+}
+.tgl-btns.four .btn {
+  width:25%;
 }

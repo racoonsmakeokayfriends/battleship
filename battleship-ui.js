@@ -1,16 +1,4 @@
 $(document).ready(function() {
-  /*
-  var canvas = $("#canvas0").get(0);
-    if (!canvas || !canvas.getContext || !canvas.getContext('2d'))
-      alert("You must use a browser that supports HTML5 Canvas to run this demo.");
-
-  function start() {
-    var battleship_ref = new Firebase('https://battlesomeships.firebaseio.com/');
-    var battleship_controller = new Battleship.Controller(battleship_ref);
-  }
-
-  start();
-  */
 
   /* =========================================================
                       CONSTANTS & GLOBALS
@@ -20,13 +8,17 @@ $(document).ready(function() {
   var NUM_USERS = 2;
 
   var FB_URL = 'https://battlesomeships.firebaseio.com/';
+  var PLACEHOLDER_FLAG = 'sdfjweute8rteijdkfvnm';
 
   // CREATE A REFERENCE TO FIREBASE
   var fb = new Firebase(FB_URL);
   var all_users_ref = fb.child('all_users');
   var game_rooms_ref = fb.child('game_room_list');
 
-  // REGISTER DOM ELEMENTS
+  /*------------
+    DOM ELEMENTS  
+    ------------*/
+    
   var $PAGE_SIGNIN = $('#page-signin');
   var $PAGE_LOBBY = $('#page-lobby');
   var $PAGE_GAMEROOM = $('#page-gameroom');
@@ -39,7 +31,8 @@ $(document).ready(function() {
   var $PROPOSE_GAME_CLASSIC_BTN = $('#page-lobby #propose_classic_game_btn');
   var $PROPOSE_GAME_BIG_SHIP_BTN = $('#page-lobby #propose_big_ship_game_btn');
   var $PROPOSE_GAME_REMAINING_BTN = $('#page-lobby #propose_remaining_game_btn');
-  var $GAME_OPT_NO_SINK_ALERT = $('#page-lobby #game_option_no_sink_alert');
+  var $GAME_OPT_SINK_ALERT = $('#page-lobby #opt-sink-alert');
+  var $GAME_OPT_NUM_SHOTS = $('#page-lobby #opt-num-shots');
   var $PROPOSE_GAME_INDIA_BTN = $('#page-lobby #propose_india_game_btn');
   var $PROPOSE_GAME_JAPAN_BTN = $('#page-lobby #propose_japan_game_btn');
   var $PROPOSE_GAME_RUSSIA_BTN = $('#page-lobby #propose_russia_game_btn');
@@ -67,7 +60,6 @@ $(document).ready(function() {
   // Some globals for this user
   var my_name = 'noone';
   var my_data = {id:'',name:'',status:''};
-  var PLACEHOLDER_FLAG = 'sdfjweute8rteijdkfvnm';
   var battleship_controller;
 
   /*------------
@@ -132,12 +124,11 @@ $(document).ready(function() {
     ------------*/
 
   //// USER SELECTS/DESELECTS A PLAYER
-  $(document).on('click','#page-lobby #present_users li.user, .check',function (e) {
+  $(document).on('click','#page-lobby #present_users li.user',function (e) {
     $(this).toggleClass('selected');
     $(this).children('i').toggleClass('fa-check-square-o');
     $(this).children('i').toggleClass('fa-square-o');
   });
-
   //// USER ATTEMPTS TO START A 'CLASSIC' GAME
   $PROPOSE_GAME_CLASSIC_BTN.click(function () {
     // check that no more than X users are chosen
@@ -146,42 +137,18 @@ $(document).ready(function() {
       return;
     }
 
-    if ($GAME_OPT_NO_SINK_ALERT.hasClass('selected')) {
+    // get game options
+    if ($GAME_OPT_SINK_ALERT.hasClass('on')) {
       // do stuff
     }
-
-    // create a list of all selected users
-    var user_list = [];
-    user_list.push(my_data);
-    $LOBBY_LIST_USERS.children('li.user.selected').each(function () {
-      user_list.push({id:$(this).attr('id'),name:$(this).children('.username').text(),status:'lobby'});
-    });
-
-    invite_users(user_list);
-  });
-  //// USER ATTEMPTS TO START A 'BIG SHIP' GAME
-  $PROPOSE_GAME_BIG_SHIP_BTN.click(function () {
-    // check that no more than X users are chosen
-    if ($LOBBY_LIST_USERS.children('li.user.selected').length > MAX_USERS) {
-      // TODO
-      return;
+    if ($('#opt-num-shots-remaining').hasClass('active')) {
+      // do stuff
     }
-    // create a list of all selected users
-    var user_list = [];
-    user_list.push(my_data);
-    $LOBBY_LIST_USERS.children('li.user.selected').each(function () {
-      user_list.push({id:$(this).attr('id'),name:$(this).children('.username').text(),status:'lobby'});
-    });
-
-    invite_users(user_list);
-  });
-  //// USER ATTEMPTS TO START A 'REMAINING' GAME
-  $PROPOSE_GAME_REMAINING_BTN.click(function () {
-    // check that no more than X users are chosen
-    if ($LOBBY_LIST_USERS.children('li.user.selected').length > MAX_USERS) {
-      // TODO
-      return;
+    if ($('#opt-num-shots-biggest').hasClass('active')) {
+      // do stuff
     }
+    // otherwise, it'a a classic game
+
     // create a list of all selected users
     var user_list = [];
     user_list.push(my_data);
@@ -191,74 +158,6 @@ $(document).ready(function() {
 
     invite_users(user_list);
   });
-  /*
-    //// USER ATTEMPTS TO START A 'NO ALERT' GAME
-    $PROPOSE_GAME_NO_ALERT_BTN.click(function () {
-      // check that no more than X users are chosen
-      if ($LOBBY_LIST_USERS.children('li.user.selected').length > MAX_USERS) {
-        // TODO
-        return;
-      }
-      // create a list of all selected users
-      var user_list = [];
-      user_list.push(my_data);
-      $LOBBY_LIST_USERS.children('li.user.selected').each(function () {
-        user_list.push({id:$(this).attr('id'),name:$(this).children('.username').text(),status:'lobby'});
-      });
-
-      invite_users(user_list);
-    });
-  */
-
-  //// USER ATTEMPTS TO START A 'INDIA' GAME
-  $PROPOSE_GAME_INDIA_BTN.click(function () {
-    // check that no more than X users are chosen
-    if ($LOBBY_LIST_USERS.children('li.user.selected').length > MAX_USERS) {
-      // TODO
-      return;
-    }
-    // create a list of all selected users
-    var user_list = [];
-    user_list.push(my_data);
-    $LOBBY_LIST_USERS.children('li.user.selected').each(function () {
-      user_list.push({id:$(this).attr('id'),name:$(this).children('.username').text(),status:'lobby'});
-    });
-
-    invite_users(user_list);
-  });
-  //// USER ATTEMPTS TO START A 'JAPAN' GAME
-  $PROPOSE_GAME_JAPAN_BTN.click(function () {
-    // check that no more than X users are chosen
-    if ($LOBBY_LIST_USERS.children('li.user.selected').length > MAX_USERS) {
-      // TODO
-      return;
-    }
-    // create a list of all selected users
-    var user_list = [];
-    user_list.push(my_data);
-    $LOBBY_LIST_USERS.children('li.user.selected').each(function () {
-      user_list.push({id:$(this).attr('id'),name:$(this).children('.username').text(),status:'lobby'});
-    });
-
-    invite_users(user_list);
-  });
-  //// USER ATTEMPTS TO START A 'RUSSIA' GAME
-  $PROPOSE_GAME_RUSSIA_BTN.click(function () {
-    // check that no more than X users are chosen
-    if ($LOBBY_LIST_USERS.children('li.user.selected').length > MAX_USERS) {
-      // TODO
-      return;
-    }
-    // create a list of all selected users
-    var user_list = [];
-    user_list.push(my_data);
-    $LOBBY_LIST_USERS.children('li.user.selected').each(function () {
-      user_list.push({id:$(this).attr('id'),name:$(this).children('.username').text(),status:'lobby'});
-    });
-
-    invite_users(user_list);
-  });
-
 
   /*------------
   upating the lobby  
@@ -310,6 +209,18 @@ $(document).ready(function() {
 
     // check if its us&we got a invitation
     if (get_user_id(snapshot) == my_data.id && snapshot.val().status == 'invited') {
+      // put all the nessecary game info into the invitation
+      var txt = 'A Classic Game';
+      var my_gr = get_my_gameroom_ref();
+      my_gr.child('creator').once('value',function(snap) {
+        $LOBBY_MD_INVITATION.find('#game-creator').html(snap.val());
+      });
+      my_gr.child('sink_alert').once('value',function(snap) {
+        if (!snap.val()) {
+          txt += '<br/>+ NO alerts when a ship has been sunk';
+        }
+        $LOBBY_MD_INVITATION.find('.md-txt').html(txt);
+      });
       $LOBBY_MD_INVITATION.removeClass('hidden');
     }
   });
@@ -321,14 +232,29 @@ $(document).ready(function() {
     game_rooms_ref.child(gameroom_key).child('user_list').child(PLACEHOLDER_FLAG).set('');
     game_rooms_ref.child(gameroom_key).child('chatlog').set('');
     game_rooms_ref.child(gameroom_key).child('gameover').set(false);
+    game_rooms_ref.child(gameroom_key).child('creator').set(my_data.id);
 
     // set the gameplay options
-    if ($GAME_OPT_NO_SINK_ALERT.hasClass('selected')) {
-      game_rooms_ref.child(gameroom_key).child('sink_alert').set(false);
+    var bs_op = new Battleship_Options();
+    if ($GAME_OPT_SINK_ALERT.hasClass('on')) {
+      bs_op.set_ship_sink_alert(false);
     }
     else {
-      game_rooms_ref.child(gameroom_key).child('sink_alert').set(true);
+      bs_op.set_ship_sink_alert(true);
     }
+
+    if ($('#opt-num-shots-remaining').hasClass('active')) {
+      bs_op.set_num_shots_type('remaining');
+    }
+    else if ($('#opt-num-shots-biggest').hasClass('active')) {
+      bs_op.set_num_shots_type('biggest');
+    }
+    else {
+      bs_op.set_num_shots_type('standard');
+    }
+
+    game_rooms_ref.child(gameroom_key).child('options').set(bs_op.to_obj());
+
 
     // invite the users
     for (var i = 0; i < user_list.length; i++) {
@@ -369,6 +295,9 @@ $(document).ready(function() {
     battleship_ref.once('value',function(snap) {
       if (!snap.val().sink_alert){
         battleship_controller.set_ship_sink_alert(false);
+      }
+      if (snap.val().num_shots_type){
+        battleship_controller.set_num_shots(snap.val().num_shots_type);
       }
     })
   }
@@ -482,6 +411,13 @@ $(document).ready(function() {
   $('.message .close.btn').click(function() {
     $(this).closest('.message').fadeOut();
   });
+  $('.tgl-btn').on('click', function() {
+    $(this).toggleClass('on');
+  });
+  $('.tgl-btns .btn').click(function() {
+    $(this).parents('.tgl-btns').children('.btn').removeClass('active');
+    $(this).addClass('active');
+  });
 
   function open_page($page_to_open) {
     $('.page, .page .md').addClass('hidden');
@@ -507,6 +443,10 @@ $(document).ready(function() {
     all_users_ref.child(my_data.id).child('gameroom_key').set(null);
     open_page($PAGE_LOBBY);    
   }
+
+/* =========================================================
+                      SENDING FEEDBACK
+   ========================================================= */
 
 
   $('#report-bug-btn').click(function() {
@@ -537,12 +477,3 @@ $(document).ready(function() {
   });
 
 })
-
-/*
-  [ ] when two players are in the gameroom, start a game
-      [ ] figure out when two players are in gameroom
-      [ ] start the game
-  [ ] deleting empty gamerooms
-
-  [ ] ask to play again
-*/

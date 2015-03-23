@@ -3,22 +3,18 @@ var Battleship = {};
 
 $(document).ready(function() {
 /* =========================================================
-                CONFIG, CONSTANTS, + GLOBALS
-   ========================================================= */
-
-/* =========================================================
                       LOGIC FUNCTIONS
    ========================================================= */
 
-/* =========================================================
-                        DOM FUNCTIONS
-   ========================================================= */
 
 /* =========================================================
-                      USER INTERACTIONS
+                        DOM ELEMENTS
    ========================================================= */
-   $MSG_CLICK_OWN_BOARD = $('#msg-click-own-board');
-   $MSG_SHIP_SUNK = $('#msg-ship-sunk');
+
+  var $MSG_CLICK_OWN_BOARD = $('#msg-click-own-board');
+  var $MSG_SHIP_SUNK = $('#msg-ship-sunk');
+  var $NUM_SHOTS_REMAINING = $('#num-shots-remaining');
+  var $FIRE_SHOTS_BTN = $('#fire-shots-btn');
 
 /* =========================================================
                 CONFIG, CONSTANTS, + GLOBALS
@@ -40,36 +36,35 @@ $(document).ready(function() {
     {name:'patrol boat',size:2}
   ];
 
-  // from 'this' players perspective
   Battleship.WATER = 'itswaterandiknowit!';
   Battleship.BOAT = 'deresaboathere!';
-
-  // from 'other' players perspective
   Battleship.HIT = 'immahit!';
   Battleship.MISS = 'nothingshere!';
   Battleship.SUNK = 'immadownanddead!';
   Battleship.FLAG_W = 'flaggedandh20';
   Battleship.FLAG_B = 'flaggedandshit';
+  Battleship.TARGET_W = 'targetw';
+  Battleship.TARGET_B = 'targetb';
 
   Battleship.BLOCK_BORDER_COLOR = 'black';
   Battleship.TURN_TIME_LIMIT = 30000;
-
-  Battleship.GameOptions = {
-    ship_sink_alert_on: true
-  };
 
 /* =========================================================
                            BOARD
    ========================================================= */
 
   //// Stores the state of a battleship board and handles drawing it.
-  Battleship.Board = function (canvas, player_ref) {
+  Battleship.Board = function (canvas, player_ref,game_options) {
     this.context = canvas.getContext('2d');
     this.player_ref = player_ref;
     this.gameroom_ref = player_ref.parent().parent();
     this.snapshot = null;
     this.is_my_board = false;
     this.create_random_board();
+    this.stats = {};
+    this.game_options = game_options;
+    this.stats.remaining_ships = Battleship.SHIPS.length;
+    this.stats.biggest_ship = Battleship.SHIPS[0].size;
 
     // Listen for changes to our board.
     var self = this;
@@ -82,12 +77,16 @@ $(document).ready(function() {
   /*------------
      displaying 
     ------------*/
+
   Battleship.Board.prototype.alert_ship_sunk = function(ship_name) {
-    if (!Battleship.GameOptions.ship_sink_alert_on) {return;}
+    if (!this.game_options.ship_sink_alert_on) {return;}
 
     $MSG_SHIP_SUNK.find('.text').html(ship_name+' has been sunk!');
     $MSG_SHIP_SUNK.fadeIn();
-  }
+  };
+  Battleship.Board.prototype.draw_target = function(left,top) {
+    this.context.fillStyle = 'white';
+  };
   Battleship.Board.prototype.draw_hit = function (left,top) {
     this.context.fillStyle = 'red';
   };
@@ -107,7 +106,7 @@ $(document).ready(function() {
     this.context.fillStyle = 'blue';
   };
   Battleship.Board.prototype.draw_sink = function (left,top) {
-    if (Battleship.GameOptions.ship_sink_alert_on) {
+    if (this.game_options.ship_sink_alert_on) {
       this.context.fillStyle = 'black';
     }
     else {
@@ -125,10 +124,10 @@ $(document).ready(function() {
         top = r * Battleship.SQUARE_SIZE_PIXELS;
         this.context.lineWidth = 1;
         this.context.strokeStyle = Battleship.BLOCK_BORDER_COLOR;
-        if (square_state == Battleship.BOAT || square_state == Battleship.FLAG_B) {
+        if (square_state == Battleship.BOAT || square_state == Battleship.FLAG_B || square_state == Battleship.TARGET_B) {
           this.draw_boat(left,top);
         }
-        else if (square_state == Battleship.WATER || square_state == Battleship.FLAG_W) {
+        else if (square_state == Battleship.WATER || square_state == Battleship.FLAG_W || square_state == Battleship.TARGET_W) {
           this.draw_water(left,top);
         }
         else if (square_state == Battleship.HIT) {
@@ -147,7 +146,6 @@ $(document).ready(function() {
   };
 
   Battleship.Board.prototype.draw_their_board = function () {
-    // Iterate over columns / rows in board data and draw each non-empty block.
     var square_state,left,top
     for (var c = 0; c < Battleship.BOARD_WIDTH; c++) {
       for (var r = 0; r < Battleship.BOARD_HEIGHT; r++) {
@@ -156,7 +154,6 @@ $(document).ready(function() {
         top = r * Battleship.SQUARE_SIZE_PIXELS;
         this.context.lineWidth = 1;
         this.context.strokeStyle = 'white';
-        // this is an unknown square
         if (square_state == Battleship.BOAT||square_state == Battleship.WATER) {
           this.draw_fog(left,top);
         }
@@ -172,13 +169,16 @@ $(document).ready(function() {
         else if (square_state == Battleship.FLAG_W || square_state == Battleship.FLAG_B) { 
           this.draw_flag(left,top);
         }
+        else if (square_state == Battleship.TARGET_B || square_state == Battleship.TARGET_W) {
+          this.draw_target(left,top);
+        }
         this.context.fillRect(left, top, Battleship.SQUARE_SIZE_PIXELS, Battleship.SQUARE_SIZE_PIXELS);
         this.context.strokeRect(left, top, Battleship.SQUARE_SIZE_PIXELS, Battleship.SQUARE_SIZE_PIXELS);
       }
     }
   };
 
-  //// Draws the contents of the board as well as the current piece.
+  //// Main drawing handler
   Battleship.Board.prototype.draw = function () {
     this.context.clearRect(0, 0, Battleship.BOARD_WIDTH_PIXELS, Battleship.BOARD_HEIGHT_PIXELS);
     if (this.is_my_board) {
@@ -211,7 +211,6 @@ $(document).ready(function() {
       };
     };
   };
-
   //// HELPER: Check if this piece will collide with another piece if it is place here
   Battleship.Board.prototype.check_for_collision = function (row,col,ship_size,horizontal) {
     if (horizontal) {
@@ -230,7 +229,6 @@ $(document).ready(function() {
     }
     return false;
   };
-
   //// Create random board 
   Battleship.Board.prototype.create_random_board = function () {
     var col,row,horizontal;
@@ -264,8 +262,7 @@ $(document).ready(function() {
   Battleship.Board.prototype.set_square_state = function (row,col,square_state) {
     this.player_ref.child('board').child(row).child(col).set(square_state);
   };
-
-  //// Sets a given ship
+  //// Positions given ship in board and saves its info
   Battleship.Board.prototype.set_ship = function (row,col,ship_size,horizontal,ship_name) {
     for (var i = 0; i < ship_size; i++) {
       if (horizontal) {
@@ -282,7 +279,7 @@ $(document).ready(function() {
     var data = {name:ship_name,ship_size:ship_size,row:row,col:col,horizontal:horizontal,sunk:false};
     this.player_ref.child('ships').child(ship_name).set(data);
   };
-  //// takes the data_board and saves it in fb
+  //// takes a matrix(data_board) and saves it as the board in fb
   Battleship.Board.prototype.set_board = function () {
     for (var r = 0; r < Battleship.BOARD_HEIGHT; r++) {
       for (var c = 0; c < Battleship.BOARD_WIDTH; c++) {
@@ -298,6 +295,7 @@ $(document).ready(function() {
       };
     };
   };
+  //// sinks the given ship
   Battleship.Board.prototype.sink_the_ship = function (ship_data) {
     var r=ship_data.row;
     var c=ship_data.col;
@@ -310,6 +308,26 @@ $(document).ready(function() {
       } 
     };
     this.player_ref.child('ships').child(ship_data.name).child('sunk').set(true)
+  };
+  //// updates the number of shots this player has
+  Battleship.Board.prototype.update_num_shots = function (sunk_ship_data) {
+    if (this.game_options.num_shots_type == 'remaining') {
+      this.stats.remaining_ships -= 1;      
+    }
+    if (this.game_options.num_shots_type == 'biggest') {
+      if (sunk_ship_data.ship_size == this.stats.biggest_ship) {
+        var next_biggest = -1;
+        this.player_ref.child('ships').once('value',function (all_ships) {
+          all_ships.forEach(function(ship_snap) {
+            var ship_d = ship_snap.val();
+            if (!ship_d.sunk && ship_d.ship_size > next_biggest) {
+              next_biggest = ship_d.ship_size;
+            }
+          })
+        })
+        this.stats.biggest_ship = next_biggest;
+      }     
+    }
   };
 
   /*------------
@@ -325,14 +343,6 @@ $(document).ready(function() {
     var ship_data = this.snapshot === null ? null : this.snapshot.child('ships/'+ship_name).val();
     return ship_data || -1;
   };
-
-  //// Converts mouse position to board position
-  Battleship.Board.get_position = function (mousex,mousey) {
-    var r = Math.floor(mousey/Battleship.SQUARE_SIZE_PIXELS);
-    var c = Math.floor(mousex/Battleship.SQUARE_SIZE_PIXELS);
-    return {row:r,col:c};
-  };
-
   //// Figures out which ship is in this square
   Battleship.Board.prototype.get_ship_from_pos = function(row,col) {
     var ship_data;
@@ -343,7 +353,8 @@ $(document).ready(function() {
       }
     };
     return -1;
-  }
+  };
+
   /*------------
      check-ers 
     ------------*/
@@ -358,7 +369,7 @@ $(document).ready(function() {
       return ship_data.row<=row && ship_data.row+ship_data.ship_size>=row;     
     }
     return -1;
-  }
+  };
   //// Checks if all spots for this ship have been hit
   Battleship.Board.prototype.check_if_ship_sank = function (row,col) {
     var ship_data = this.get_ship_from_pos(row,col);
@@ -380,7 +391,7 @@ $(document).ready(function() {
     };
 
     return ship_data;
-  }
+  };
   //// Checks if all ships have been sunk
   Battleship.Board.prototype.check_if_game_over = function () {
     var gameover = true;
@@ -390,9 +401,19 @@ $(document).ready(function() {
       });
     });
     return gameover;
-  }
+  };
 
-  //// User wants to flag/unflag this square (visual effects only)
+  /*------------
+      'public' 
+    ------------*/
+
+  //// Converts mouse position to board position
+  Battleship.Board.get_position = function (mousex,mousey) {
+    var r = Math.floor(mousey/Battleship.SQUARE_SIZE_PIXELS);
+    var c = Math.floor(mousex/Battleship.SQUARE_SIZE_PIXELS);
+    return {row:r,col:c};
+  };
+  //// User wants to flag/unflag this square
   Battleship.Board.prototype.flag_square = function (row,col) {
     var state = this.get_square_state(row,col);
     console.log(state);
@@ -408,27 +429,105 @@ $(document).ready(function() {
     if (state == Battleship.FLAG_W) {
       this.set_square_state(row,col,Battleship.WATER);
     }
-  }
+  };
+  //// 
   Battleship.Board.prototype.make_guess = function (row,col) {
     var state = this.get_square_state(row,col);
     if (state == Battleship.BOAT) {
       this.set_square_state(row,col,Battleship.HIT);
       var ship_sank = this.check_if_ship_sank(row,col)
-      if (ship_sank) { //todo
-        // boat is sunk        
+      if (ship_sank) {      
         this.alert_ship_sunk(ship_sank.name);
         this.sink_the_ship(ship_sank)
         if (this.check_if_game_over()) { //todo
           alert('gameover');
           this.gameroom_ref.child('gameover').set(true);
+          return;
         }
+
+        this.update_num_shots(ship_sank);
       }
     }
     if (state == Battleship.WATER) {
       this.set_square_state(row,col,Battleship.MISS);
     }
-    return state;
-  }
+    return (state==Battleship.BOAT||state==Battleship.WATER);
+  };
+  //// Get the number of shots per turn for this player
+  Battleship.Board.prototype.get_num_shots = function() {
+    if (this.game_options.num_shots_type == 'standard') {
+      return 1;
+    }
+    if (this.game_options.num_shots_type == 'remaining') {
+      return this.stats.remaining_ships;
+    }
+    if (this.game_options.num_shots_type == 'biggest') {
+      return this.stats.biggest_ship;
+    }
+  };
+  //// Set this sq to be targetted, it returns the change in targets set
+  Battleship.Board.prototype.set_target = function(row,col) {
+    var sq_state = this.get_square_state(row,col);
+    if (sq_state == Battleship.WATER) {
+      this.set_square_state(row,col,Battleship.TARGET_W);
+      return -1;
+    }
+    else if (sq_state == Battleship.BOAT) {
+      this.set_square_state(row,col,Battleship.TARGET_B);
+      return -1;      
+    }
+    else if (sq_state == Battleship.TARGET_W) {
+      this.set_square_state(row,col,Battleship.WATER);
+      return 1;
+    }
+    else if (sq_state == Battleship.TARGET_B) {
+      this.set_square_state(row,col,Battleship.BOAT);
+      return 1;
+    }
+    return 0;
+  };
+  //// Like set_target() except it exclusively undos targets
+  Battleship.Board.prototype.set_target_undo_only = function(row,col) {
+    var sq_state = this.get_square_state(row,col);
+    if (sq_state == Battleship.TARGET_W) {
+      this.set_square_state(row,col,Battleship.WATER);
+      return 1;
+    }
+    else if (sq_state == Battleship.TARGET_B) {
+      this.set_square_state(row,col,Battleship.BOAT);
+      return 1;
+    }
+    return 0;
+  };
+  //// Makes a guess for each square in the given targets[]
+  Battleship.Board.prototype.fire_all_targets = function(targets) {
+    var row,col,sq_state;
+    for (var i = 0; i < targets.length; i++) {
+      row = targets[i].row;
+      col = targets[i].col;
+      sq_state = this.get_square_state(row,col);
+      if (sq_state == Battleship.TARGET_B) {
+        this.set_square_state(row,col,Battleship.HIT);
+        var ship_sank = this.check_if_ship_sank(row,col)
+        if (ship_sank) {      
+          this.alert_ship_sunk(ship_sank.name);
+          this.sink_the_ship(ship_sank)
+          if (this.check_if_game_over()) { //todo
+            alert('gameover');
+            this.gameroom_ref.child('gameover').set(true);
+            return;
+          }
+          this.update_num_shots(ship_sank);
+        }
+      }
+      else if (sq_state == Battleship.TARGET_W) {
+        this.set_square_state(row,col,Battleship.MISS);
+      }
+      else {
+        alert('ERROR: ==> line 533 a target wasnt marked as target');
+      }
+    };
+  };
 
   /*------------
       printers 
@@ -449,7 +548,7 @@ $(document).ready(function() {
       };
       console.log(st)
     };
-  }
+  };
   Battleship.Board.prototype.print_board2 = function() {
     var st,state;
     st = '-----\n';
@@ -467,7 +566,7 @@ $(document).ready(function() {
     };
     console.log(st);
     console.log('-----');
-  }
+  };
 /* =========================================================
                         CONTROLLER
    ========================================================= */
@@ -477,37 +576,44 @@ $(document).ready(function() {
   Battleship.Controller = function (gameroom_ref,myid) {
     this.gameroom_ref = gameroom_ref;
     this.battleship_ref = gameroom_ref.child('game');
-
-    // gameplay options (default values)
-    Battleship.GameOptions.ship_sink_alert_on = true;
-
-    this.create_boards();
     var self=this;
-    this.gameroom_ref.child('user_list').once('value',function (userlist_snap) {
-      var i=0;
-      userlist_snap.forEach(function(user_snap) {
-        if (user_snap.key() == myid) {
-          self.start_playing(i);
-        }
-        i+=1;
+    // get game options
+    this.gameroom_ref.child('options').once('value',function (options_snap) {
+      self.game_options = options_snap.val();
+      self.create_boards(); 
+      var self2 = self;
+      self.gameroom_ref.child('user_list').once('value',function (userlist_snap) {
+        var i=0;
+        userlist_snap.forEach(function(user_snap) {
+          if (user_snap.key() == myid) {
+            self2.start_playing(i);
+          }
+          i+=1;
+        })
       })
-    })  
+      if (self.game_options.num_shots_type == 'standard') {
+        $('#game-dashboard').addClass('hidden');
+      }
+      self.targets = [];
+    });
+
+     
   };
 
-  Battleship.Controller.prototype.set_ship_sink_alert = function(bool) {
-    Battleship.GameOptions.ship_sink_alert_on = bool;
-  };
+
+  /*------------
+    initializers 
+    ------------*/
+
 
   Battleship.Controller.prototype.create_boards = function () {
     this.boards = [];
     for(var i = 0; i <= 1; i++) {
       var player_ref = this.battleship_ref.child('player' + i);
       var canvas = $('#canvas' + i).get(0);
-      this.boards.push(new Battleship.Board(canvas, player_ref));
+      this.boards.push(new Battleship.Board(canvas, player_ref,this.game_options));
     }
   };
-
-
   //// Once we've joined, enable controlling our player.
   Battleship.Controller.prototype.start_playing = function (player_num) {
     this.my_player_ref = this.battleship_ref.child('player' + player_num);
@@ -523,16 +629,72 @@ $(document).ready(function() {
     // Clear my_player_ref 'online' status when we disconnect so somebody else can join.
     this.my_player_ref.child('online').onDisconnect().remove();
 
+
+    // init player num shots
+    this.my_player_ref.child('num_shots').set(this.my_board.get_num_shots());
     var self = this;
     // inform the player whose turn it is
     this.battleship_ref.child('player_turn').on('value',function (snapshot) {
       inform_turn_info(snapshot.val().num == self.my_num);
     });
+    // update the num shots
+    this.battleship_ref.child('player'+this.my_num.toString()+'/num_shots').on('value',function(snap){ 
+      $NUM_SHOTS_REMAINING.html(snap.val());
+    })
     this.enable_mouse();
   };
 
 
-  //// Sets up handlers for all mouse commands.   
+  /*------------
+    user actions 
+    ------------*/
+  Battleship.Controller.prototype.standard_turn_handler = function(pos) {           
+    var op =  1-this.my_num;
+    var turn_success = this.boards[op].make_guess(pos.row,pos.col);
+    if (turn_success) {
+      this.battleship_ref.child('player_turn/num').set(op);
+      this.battleship_ref.child('player_turn/timestamp').set(Firebase.ServerValue.TIMESTAMP);
+    }
+    // clearInterval(turn_timer);
+    // var turn_timer = setInterval(function() {func_turn_timer()},Battleship.TURN_TIME_LIMIT);
+  };
+
+  //// Helper: keeps the targets[] updated
+  Battleship.Controller.prototype.update_target_arr = function(pos,dtar) {
+    if (dtar == -1) { // we need to add pos to arr
+      this.targets.push(pos);
+    }
+    if (dtar == 1) { // find {pos} and remove it
+      for (var i=0; i<this.targets.length;i++) {
+        if (this.targets[i].row == pos.row && this.targets[i].col == pos.col) {
+          this.targets.splice(i,1);
+          break;
+        }
+      }
+    }
+  };
+  //// Handles selecting/deselecting targets
+  Battleship.Controller.prototype.target_handler = function(pos) {    
+    var op =  1-this.my_num;
+    var self = this;
+    this.my_player_ref.child('num_shots').once('value',function(snap) {
+      var remaining_shots = snap.val();
+      var dtar;
+      if (remaining_shots <= 0) {
+        dtar = self.boards[op].set_target_undo_only(pos.row,pos.col);
+        alert('limit reached!');
+      }
+      else {
+        dtar = self.boards[op].set_target(pos.row,pos.col);
+      }
+      var new_remaining_shots = remaining_shots+dtar;
+      self.my_player_ref.child('num_shots').set(new_remaining_shots);
+      self.update_target_arr(pos,dtar);
+      console.log(self.targets);
+    });
+  };
+
+  //// Sets up handlers for all mouse actions  
   Battleship.Controller.prototype.enable_mouse = function () {
     var self = this;
     $(document).on('click','canvas',function (evt) {
@@ -552,16 +714,41 @@ $(document).ready(function() {
 
       // MAKING A GUESS
       self.battleship_ref.child('player_turn/num').once('value',function (snapshot) {
-        if (snapshot.val() == self.my_num) { 
-          // TODO:if this guess doesn't change anything, dont change the player turn
-          var state = self.boards[1-self.my_num].make_guess(pos.row,pos.col);
-          self.battleship_ref.child('player_turn/num').set(1-snapshot.val());
-          self.battleship_ref.child('player_turn/timestamp').set(Firebase.ServerValue.TIMESTAMP);
-          // clearInterval(turn_timer);
-          // var turn_timer = setInterval(function() {func_turn_timer()},Battleship.TURN_TIME_LIMIT);
+        if (snapshot.val() == self.my_num) {
+          if (self.game_options.num_shots_type == 'standard') { 
+            self.standard_turn_handler(pos);
+          }
+          else {
+            self.target_handler(pos);
+          }
         }
       });
-    });  
+    });
+
+    // FIRING MULTIPLE SHOTS
+    $FIRE_SHOTS_BTN.click(function() {
+      var op = 1-self.my_num;
+
+      // 1. get the num shots remaining
+      // 2. if num > 0, tell user, ask for confirmation
+      // 3. 
+      // fire the shots
+
+
+      var op =  1-self.my_num;
+      self.boards[op].fire_all_targets(self.targets);
+      self.targets = [];
+
+      // switch turns
+      self.battleship_ref.child('player_turn/num').set(op);
+      self.battleship_ref.child('player_turn/timestamp').set(Firebase.ServerValue.TIMESTAMP);
+
+      var num_shots = self.boards[op].get_num_shots();
+      self.battleship_ref.child('player'+op.toString()+'/num_shots').set(num_shots);
+      //alert('player'+op.toString()+'/num_shots/'+num_shots.toString());
+      // clearInterval(turn_timer);
+      // var turn_timer = setInterval(function() {func_turn_timer()},Battleship.TURN_TIME_LIMIT);
+      })  
   };
   
   function func_turn_timer() {
