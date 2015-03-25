@@ -42,7 +42,7 @@ $(document).ready(function() {
 
   var $ACCEPT_INVITE_BTN = $('#accept_invite_btn');
   var $REJECT_INVITE_BTN = $('#reject_invite_btn');
-
+  var $CANCEL_INVITE_BTN = $('#cancel_invite_btn')
   var $EXIT_GAMEROOM_BTN = $('#exit_gameroom_btn');
   var $ACCEPT_REPLAY_BTN = $('#accept_replay_btn');
   var $REJECT_REPLAY_BTN = $('#reject_replay_btn');
@@ -56,7 +56,7 @@ $(document).ready(function() {
   var $MSG_USERNAME_EMPTY = $('#msg-username-empty');
   var $MSG_USERNAME_TAKEN = $('#msg-username-taken');
   var $MSG_OPPONENT_LEFT = $('#msg-opponent-left');
-
+  var $MSG_OPPONENT_CANCELLED = $('#msg-opponent-cancelled');
   // Some globals for this user
   var my_name = 'noone';
   var my_data = {id:'',name:'',status:''};
@@ -137,18 +137,6 @@ $(document).ready(function() {
       return;
     }
 
-    // get game options
-    if ($GAME_OPT_SINK_ALERT.hasClass('on')) {
-      // do stuff
-    }
-    if ($('#opt-num-shots-remaining').hasClass('active')) {
-      // do stuff
-    }
-    if ($('#opt-num-shots-biggest').hasClass('active')) {
-      // do stuff
-    }
-    // otherwise, it'a a classic game
-
     // create a list of all selected users
     var user_list = [];
     user_list.push(my_data);
@@ -213,15 +201,7 @@ $(document).ready(function() {
     }
   });
 
-  function continue_inviting(user_list) {    
-    // initialize the gameroom
-    var gameroom_key = game_rooms_ref.push({'timestamp':Firebase.ServerValue.TIMESTAMP}).key();
-    game_rooms_ref.child(gameroom_key).child('user_list').child(PLACEHOLDER_FLAG).set('');
-    game_rooms_ref.child(gameroom_key).child('chatlog').set('');
-    game_rooms_ref.child(gameroom_key).child('gameover').set(false);
-    game_rooms_ref.child(gameroom_key).child('creator').set(my_data.id);
-
-    // set the gameplay options
+  function set_gameplay_options(gameroom_ref) {
     var bs_op = new Battleship_Options();
     if ($GAME_OPT_SINK_ALERT.hasClass('on')) {
       bs_op.set_ship_sink_alert(true);
@@ -240,8 +220,20 @@ $(document).ready(function() {
       bs_op.set_num_shots_type('standard');
     }
 
-    game_rooms_ref.child(gameroom_key).child('options').set(bs_op.to_obj());
+    gameroom_ref.child('options').set(bs_op.to_obj());
+    return gameroom_ref
+  }
 
+  function continue_inviting(user_list) {    
+    // initialize the gameroom
+    var gameroom_ref = game_rooms_ref.push({'timestamp':Firebase.ServerValue.TIMESTAMP});
+    var gameroom_key = gameroom_ref.key();
+    gameroom_ref.child('user_list').child(PLACEHOLDER_FLAG).set('');
+    gameroom_ref.child('chatlog').set('');
+    gameroom_ref.child('gameover').set(false);
+    gameroom_ref.child('creator').set(my_data.id);
+
+    gameroom_ref = set_gameplay_options(gameroom_ref);
 
     // invite the users
     for (var i = 0; i < user_list.length; i++) {
@@ -373,16 +365,23 @@ $(document).ready(function() {
     my_gameroom_ref.child('chatlog').push(alert_data);
   }
 
+  function send_back_to_lobby() {
+    var my_gr = get_my_gameroom_ref();
+    my_gr.child('player_left').set(true);
+    all_users_ref.child(my_data.id).child('status').set('lobby');
+    all_users_ref.child(my_data.id).child('gameroom_key').set(null);
+  }
+
   $ACCEPT_INVITE_BTN.click(function () {
     all_users_ref.child(my_data.id).child('status').set('gameroom');
     join_game();
   });
 
   $REJECT_INVITE_BTN.click(function () {
+    send_back_to_lobby();
     alert_invite_rejection(get_my_gameroom_ref());
-    all_users_ref.child(my_data.id).child('status').set('lobby');
   });
-
+  
   $EXIT_GAMEROOM_BTN.click(function() {
     leave_game_room();
   });
@@ -453,20 +452,30 @@ $(document).ready(function() {
     // put all the nessecary game info into the invitation
     var txt = 'A Classic Game';
     var my_gr = get_my_gameroom_ref();
-    my_gr.child('creator').once('value',function(snap) {
-      $LOBBY_MD_INVITATION.find('#game-creator').html(snap.val());
+    // get the creator's id 
+    my_gr.child('creator').once('value',function(host_snap) {
+      $LOBBY_MD_INVITATION.find('#game-creator').html(host_snap.val());
     });
-    my_gr.child('options').once('value',function (snap) {
-      var options = snap.val();
+    // get the options the creator choose  
+    my_gr.child('options').once('value',function (options_snap) {
+      var options = options_snap.val();
       txt += '<br/>Num Shots Type: ' + options.num_shots_type;
       txt += '<br/>Ship Sink Alert: ';
-      txt += options.ship_sink_alert_on ? 'on' : 'off';
-      console.log(options.ship_sink_alert_on);
+      txt += options.ship_sink_alert_on ? 'on' : 'off';        
       $LOBBY_MD_INVITATION.find('.md-txt').html(txt);
-    })
-    $LOBBY_MD_INVITATION.removeClass('hidden');
+    });
 
+    my_gr.child('player_left').on('value',function(snap) {
+      if (snap.val() == true) {
+        $LOBBY_MD_INVITATION.addClass('hidden');
+        $MSG_OPPONENT_CANCELLED.fadeIn();
+        send_back_to_lobby();
+      }
+    });
+    $LOBBY_MD_INVITATION.removeClass('hidden');
   }
+
+
 /* =========================================================
                       SENDING FEEDBACK
    ========================================================= */

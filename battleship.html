@@ -109,6 +109,15 @@
       </div>  
       <i class="fa fa-close close btn"></i>
     </div>
+    <!--extra targets-->
+    <div class="message hidden" id="msg-opponent-cancelled">
+      <i class="fa fa-user-times sym"></i>
+      <div class="content">
+        <h4 class="heading">No more invitation for you!</h4>
+        <p class="text">Your opponent cancelled the invitation</p>
+      </div>  
+      <i class="fa fa-close close btn"></i>
+    </div>
 
 
 
@@ -118,10 +127,10 @@
       <div class="page-content">
         <div id="signin_msg"></div>
         <input type="text" id="username_field" placeholder="username">
-        <select id="lobby_type_field">
+        <!--<select id="lobby_type_field">
           <option value="strangers">chat with strangers</option>
           <option value="friends">chat with friends</option>
-        </select>
+        </select> -->
         <button class="btn" id="enter_lobby_btn">enter lobby</button>
       </div>
     </div>
@@ -131,18 +140,50 @@
     <div class="page hidden" id="page-lobby">
       <h1>Lobby!</h1>
       <button class="btn" id="propose_classic_game_btn">propose classic game with:</button>
-<!--       <span class="game-option check" id="game_option_no_sink_alert">
-        <i class="fa fa-square-o"></i>
-        no alert
-      </span> -->
       <div class="tgl-btn" id="opt-sink-alert">
         <span>Sink Alert</span>
+        <span class="tooltip">
+          <span class="tooltip-item"><i class="fa fa-question-circle"></i></span>
+            <span class="tooltip-content">
+              <span class="tooltip-text">
+                Informs the player when they have sunken a ship (and which ship it is). With this turned off, players must take further shots to confirm a ship has been sunken.
+              </span>
+            </span>
+        </span>
       </div>
       <label>Number of Shots Option:</label>
       <div class="tgl-btns three" id="opt-num-shots">
-        <div class="btn active" id="opt-num-shots-standard">standard</div>
-        <div class="btn" id="opt-num-shots-remaining">remaining ship</div>
-        <div class="btn" id="opt-num-shots-biggest">biggest ship</div>
+        <div class="btn active" id="opt-num-shots-standard">
+          standard
+          <span class="tooltip">
+            <span class="tooltip-item"><i class="fa fa-question-circle"></i></span>
+              <span class="tooltip-content">
+                <span class="tooltip-text">
+                  In this version, players can target only one square per turn.
+                </span>
+              </span>
+          </span>
+        </div>
+        <div class="btn" id="opt-num-shots-remaining">remaining ships
+          <span class="tooltip">
+            <span class="tooltip-item"><i class="fa fa-question-circle"></i></span>
+              <span class="tooltip-content">
+                <span class="tooltip-text">
+                  In this version, players can targets X at a time and attack them all simultaneously, where X is the number of your unsunken ships.
+                </span>
+              </span>
+          </span>
+        </div>
+        <div class="btn" id="opt-num-shots-biggest">biggest ship 
+          <span class="tooltip">
+            <span class="tooltip-item"><i class="fa fa-question-circle"></i></span>
+              <span class="tooltip-content">
+                <span class="tooltip-text">
+                  In this version, players can targets X at a time and attack them all simultaneously, where X is the length of your largest unsunken ship.
+                </span>
+              </span>
+          </span>
+        </div>
       </div>
       <ul class="list-users col-3 interactive" id="present_users">
       </ul>
@@ -152,11 +193,27 @@
         <div class="md-content">          
           <div class="md-hd">You've recieved an invitation from <strong id="game-creator"></strong></div>
           <span class="md-txt"></span>
-          <button class="btn md-close" id="accept_invite_btn">yes</button>
-          <button class="btn md-close" id="reject_invite_btn">no</button>
+          <div class="md-ft">
+            <button class="btn md-close" id="accept_invite_btn">yes</button>
+            <button class="btn md-close" id="reject_invite_btn">no</button>
+          </div>
         </div>
       </div>
 
+      <!-- ===== MD: WAITING ===== -->
+      <div class="waiting md hidden" id="md-waiting">
+        <div class="md-content">
+          <!-- TODO http://tympanus.net/Development/CreativeLoadingEffects/ -->          
+          <div class="md-hd timer">Awaiting Player Response</div>
+          <span class="md-txt">
+            Waiting for:
+            <ul class="userlist" id="waiting_on_list"></ul>
+          </span>
+          <div class="md-ft">
+            <button class="btn md-close" id="cancel_invite_btn">cancel</button>
+          </div>
+        </div>
+      </div>
     </div>
 
 
@@ -187,8 +244,18 @@
         </div>
 
         <div class="dashboard" id="game-dashboard">
-          <span class="value" id="num-shots-remaining"></span>
-          <button id="fire-shots-btn"><i class="fa fa-check"></i></button>
+           <span class="tooltip">
+            <span class="tooltip-item">
+              <span class="value" id="num-shots-remaining"></span>
+              <i class="fa fa-question-circle"></i>
+            </span>
+            <span class="tooltip-content">
+              <span class="tooltip-text">
+                number of shots remaining
+              </span>
+            </span>
+          </span>
+          <button id="fire-shots-btn">fire!</button>
         </div>
       </div>
 
